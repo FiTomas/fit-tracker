@@ -160,6 +160,26 @@ export default function Home() {
           </div>
         )}
 
+        {view === 'workout' && selWeek && (
+          <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+            <button onClick={() => setSelWeek(null)} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>← Zpět na přehled</button>
+            <h3 style={{ color: '#22c55e', fontSize: '14px', fontWeight: 600, marginBottom: '16px', textAlign: 'center' }}>TÝDEN {selWeek} - {MESOCYCLE[selWeek - 1].type}</h3>
+            <div style={{ background: '#000', borderRadius: '8px', padding: '12px', marginBottom: '12px', border: '1px solid #1a1a1a' }}>
+              <div style={{ color: '#22c55e', fontSize: '12px', marginBottom: '8px' }}>{MESOCYCLE[selWeek - 1].description}</div>
+            </div>
+            <h4 style={{ color: '#666', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase' }}>Cvičení</h4>
+            {(WEEK_EXERCISES[selWeek] || []).map((exName, i) => {
+              const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
+              return (
+                <div key={i} onClick={() => ex && startW(ex)} style={{ background: '#000', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px', border: '1px solid #1a1a1a', cursor: ex ? 'pointer' : 'default', opacity: ex ? 1 : 0.5 }}>
+                  <span style={{ fontWeight: 500 }}>{exName}</span>
+                  {ex && <span style={{ float: 'right', color: '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {view === 'meso' && selWeek && (
           <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
             <button onClick={() => setSelWeek(null)} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>← Zpět na přehled</button>
@@ -203,9 +223,18 @@ export default function Home() {
 
         {view === 'workout' && !selWeek && (
           <>
+            {/* Week Selector */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {MESOCYCLE.map(m => (
+                <button key={m.week} onClick={() => setSelWeek(m.week)} style={{ background: m.week === meso.week ? '#22c55e' : '#0a0a0a', border: m.week === meso.week ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 12px', color: m.week === meso.week ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                  {m.week}
+                </button>
+              ))}
+            </div>
+
             {/* Current Week Exercises */}
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TENTO TÝDEN</h3>
+              <h3 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {meso.week}</h3>
               {(WEEK_EXERCISES[meso.week] || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
                 return (
