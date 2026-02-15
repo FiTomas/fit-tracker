@@ -150,10 +150,10 @@ export default function Home() {
           <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
             <h3 style={{ color: '#22c55e', fontSize: '14px', fontWeight: 600, marginBottom: '16px', textAlign: 'center' }}>8-TÝDENNÍ MESOCYCLE</h3>
             {MESOCYCLE.map(m => (
-              <div key={m.week} onClick={() => setSelWeek(m.week)} style={{ background: m.type === 'DELOAD' ? 'rgba(234, 179, 8, 0.1)' : '#000', borderRadius: '8px', padding: '12px', marginBottom: '8px', border: '1px solid ' + (m.type === 'DELOAD' ? '#eab308' : '#1a1a1a'), cursor: 'pointer' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: 600 }}>Týden {m.week}</span><span style={{ color: m.type === 'BASE' ? '#3b82f6' : m.type === 'BUILD' ? '#8b5cf6' : m.type === 'PEAK' ? '#ef4444' : '#eab308', fontSize: '11px' }}>{m.type}</span></div>
+              <button type="button" key={m.week} onClick={() => { console.log('Clicked week:', m.week); setSelWeek(m.week); }} style={{ background: m.type === 'DELOAD' ? 'rgba(234, 179, 8, 0.1)' : '#000', borderRadius: '8px', padding: '12px', marginBottom: '8px', border: '1px solid ' + (m.type === 'DELOAD' ? '#eab308' : '#1a1a1a'), cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: 600, color: '#fff' }}>Týden {m.week}</span><span style={{ color: m.type === 'BASE' ? '#3b82f6' : m.type === 'BUILD' ? '#8b5cf6' : m.type === 'PEAK' ? '#ef4444' : '#eab308', fontSize: '11px', fontWeight: 600 }}>{m.type}</span></div>
                 <div style={{ color: '#666', fontSize: '12px' }}>{m.description}</div>
-              </div>
+              </button>
             ))}
             <h4 style={{ color: '#666', fontSize: '12px', margin: '20px 0 12px', textTransform: 'uppercase' }}>Typický týden</h4>
             {MESO_DAYS.map(d => <div key={d.day} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1a1a1a' }}><span style={{ color: '#888' }}>{d.day}</span><span>{d.workout}</span></div>)}
