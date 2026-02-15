@@ -73,7 +73,7 @@ const calculateNextTargets = (lastSets: WorkoutSet[]): { weight: number; reps: n
   const completedSets = lastSets.filter(s => s.completed && s.rir <= 2);
   if (completedSets.length === 0) return { weight: lastSets[0].weight, reps: lastSets[0].reps };
   
-  const bestSet = completedSets.reduce((a, b) => (a.reps > b.reps || (a.reps === b.reps && a.weight > b.weight) ? a : b);
+  const bestSet = completedSets.reduce((a, b) => (a.reps > b.reps || (a.reps === b.reps && a.weight > b.weight) ? a : b), completedSets[0]);
   
   let newWeight = bestSet.weight;
   let newReps = bestSet.reps;
