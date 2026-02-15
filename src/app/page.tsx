@@ -218,22 +218,6 @@ export default function Home() {
                 );
               })}
             </div>
-
-            <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>VŠECHNY CVIČENÍ</h3>
-            {Object.entries(byCat).map(([cat, exs]) => (
-              <div key={cat} style={{ marginBottom: '16px' }}>
-                <h4 style={{ color: CATEGORY_COLORS[cat] || '#666', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>{cat}</h4>
-                {exs.map(ex => (
-                  <div key={ex.id} style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                    <button onClick={() => startW(ex)} style={{ flex: 1, background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '8px', padding: '14px 16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 500 }}>{ex.name}</span>
-                      <span style={{ color: '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>
-                    </button>
-                    <button onClick={(e) => delEx(ex.id, e)} style={{ background: '#1a0000', border: '1px solid #330000', borderRadius: '8px', padding: '14px 12px', cursor: 'pointer', color: '#f44', fontSize: '16px' }}>×</button>
-                  </div>
-                ))}
-              </div>
-            ))}
             {showAdd ? (
               <div style={{ background: '#0a0a0a', borderRadius: '8px', padding: '16px' }}>
                 <input value={newExName} onChange={e => setNewExName(e.target.value)} placeholder="Název cviku..." autoFocus style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '14px', marginBottom: '12px' }} />
