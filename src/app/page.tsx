@@ -31,18 +31,6 @@ const WEEK_EXERCISES: Record<number, string[]> = {
   8: ['Squat', 'Bench Press', 'Row', 'Curl'],
 };
 
-const MESO_DAYS = [
-  { day: 'Pondělí', workout: 'Horní polovina' },
-  { day: 'Úterý', workout: 'Spodní polovina' },
-  { day: 'Středa', workout: 'Odpočinek' },
-  { day: 'Čtvrtek', workout: 'Horní polovina' },
-  { day: 'Pátek', workout: 'Spodní polovina' },
-  { day: 'Sobota', workout: 'Odpočinek / Dlouhý běh' },
-  { day: 'Neděle', workout: 'DELOAD - Lehký pohyb' },
-];
-
-const CATEGORY_COLORS: Record<string, string> = { CHEST: '#9333ea', BACK: '#3b82f6', LEGS: '#ef4444', SHOULDERS: '#f59e0b', BICEPS: '#10b981', TRICEPS: '#06b6d4', OTHER: '#666666' };
-
 let exercisesList: Exercise[] = [
   { id: '1', name: 'Bench Press', category: 'CHEST' },
   { id: '2', name: 'Squat', category: 'LEGS' },
@@ -72,15 +60,7 @@ export default function Home() {
   const [wHist, setWHist] = useState<WorkoutLog[]>([]);
   const [wght, setWght] = useState<WeightEntry[]>([]);
   const [meals, setMeals] = useState<MealEntry[]>([]);
-  const [view, setView] = useState<'workout' | 'weight' | 'food' | 'meso'>('workout');
-  const [showAdd, setShowAdd] = useState(false);
-  const [newExName, setNewExName] = useState('');
-  const [newWght, setNewWght] = useState('');
-  const [mName, setMName] = useState('');
-  const [mCals, setMCals] = useState('');
-  const [mPro, setMPro] = useState('');
-  const [mCarb, setMCarb] = useState('');
-  const [mFat, setMFat] = useState('');
+  const [view, setView] = useState<'workout' | 'weight' | 'food'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
 
@@ -104,17 +84,21 @@ export default function Home() {
   const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean) => { const ns = [...curSets]; ns[i] = { ...ns[i], [f]: v }; setCurSets(ns); };
   const finW = () => { if (!selEx) return; const cs = curSets.filter(s => s.completed); if (!cs.length) return; setWHist([{ id: Date.now().toString(), date: new Date().toISOString(), exerciseId: selEx.id, sets: cs }, ...wHist]); setSelEx(null); setCurSets([]); };
   const addWght = () => { if (!newWght || parseFloat(newWght) <= 0) return; setWght([{ id: Date.now().toString(), date: new Date().toISOString(), weight: parseFloat(newWght) }, ...wght]); setNewWght(''); };
+  const [newWght, setNewWght] = useState('');
   const addMeal = () => { if (!mName.trim() || !mCals) return; setMeals([{ id: Date.now().toString(), date: new Date().toISOString(), name: mName, calories: parseInt(mCals) || 0, protein: parseInt(mPro) || 0, carbs: parseInt(mCarb) || 0, fat: parseInt(mFat) || 0 }, ...meals]); setMName(''); setMCals(''); setMPro(''); setMCarb(''); setMFat(''); };
-  const delEx = (id: string, e: React.MouseEvent) => { e.stopPropagation(); exercisesList = exercisesList.filter(ex => ex.id !== id); };
-  const addEx = () => { if (!newExName.trim()) return; exercisesList.push({ id: Date.now().toString(), name: newExName, category: 'OTHER' }); setNewExName(''); setShowAdd(false); };
+  const [mName, setMName] = useState('');
+  const [mCals, setMCals] = useState('');
+  const [mPro, setMPro] = useState('');
+  const [mCarb, setMCarb] = useState('');
+  const [mFat, setMFat] = useState('');
   const delMeal = (id: string) => setMeals(meals.filter(m => m.id !== id));
-  const byCat = exercisesList.reduce((a, c) => { if (!a[c.category]) a[c.category] = []; a[c.category].push(c); return a; }, {} as Record<string, Exercise[]>);
   const fmt = (d: string) => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const fmtD = (d: string) => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
   const tdMls = meals.filter(e => new Date(e.date).toDateString() === new Date().toDateString());
   const tdTot = { calories: tdMls.reduce((s, m) => s + m.calories, 0), protein: tdMls.reduce((s, m) => s + m.protein, 0), carbs: tdMls.reduce((s, m) => s + m.carbs, 0), fat: tdMls.reduce((s, m) => s + m.fat, 0) };
   const lastWg = wght[0]?.weight || 0;
   const meso = getMesocycleWeek();
+  const currentWeek = selWeek || meso.week;
 
   const weightData = useMemo(() => {
     if (wght.length < 2) return { data: [], trend: 0, avg: 0 };
@@ -132,90 +116,26 @@ export default function Home() {
     return { data: filtered, trend, avg };
   }, [wght, weightPeriod, lastWg]);
 
-  const chartMin = weightData.data.length > 0 ? Math.min(...weightData.data.map(w => w.weight)) - 2 : 0;
-  const chartMax = weightData.data.length > 0 ? Math.max(...weightData.data.map(w => w.weight)) + 2 : 100;
-
   return (
     <div style={{ minHeight: '100vh', background: '#000', padding: '16px', fontFamily: '-apple-system', color: '#fff', paddingBottom: '80px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 700 }}>FIT TRACKER</h1>
         <p style={{ color: '#666', margin: '4px 0 20px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
 
-        <div onClick={() => { const next = (selWeek || meso.week) % 8 + 1; setSelWeek(next === meso.week ? null : next); }} style={{ background: (selWeek || meso.week) === 8 ? 'rgba(234, 179, 8, 0.2)' : 'rgba(59, 130, 248, 0.2)', border: '1px solid ' + (meso.type === 'DELOAD' ? '#eab308' : '#3b82f6'), borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', cursor: 'pointer' }}>
-          <span style={{ color: meso.type === 'DELOAD' ? '#eab308' : '#3b82f6', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>(selWeek || meso.week) === 8 ? '🔥 DELOAD WEEK' : 'WEEK ' + (selWeek || meso.week)</span>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{MESOCYCLE[(selWeek || meso.week) - 1].description}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+          <button onClick={() => setView('weight')} style={{ background: view === 'weight' ? '#1a1a1a' : '#0a0a0a', border: view === 'weight' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
+            <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>HMOTNOST</div>
+            <div style={{ fontSize: '22px', fontWeight: 600 }}>{lastWg > 0 ? lastWg + ' kg' : '--'}</div>
+          </button>
+          <button onClick={() => setView('food')} style={{ background: view === 'food' ? '#1a1a1a' : '#0a0a0a', border: view === 'food' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
+            <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>DNES</div>
+            <div style={{ fontSize: '22px', fontWeight: 600, color: tdTot.calories > 0 ? '#22c55e' : '#fff' }}>{tdTot.calories > 0 ? tdTot.calories + ' kcal' : '--'}</div>
+          </button>
         </div>
-
-        {view === 'meso' && !selWeek && (
-          <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-            <h3 style={{ color: '#22c55e', fontSize: '14px', fontWeight: 600, marginBottom: '16px', textAlign: 'center' }}>8-TÝDENNÍ MESOCYCLE</h3>
-            {MESOCYCLE.map(m => (
-              <button type="button" key={m.week} onClick={() => { console.log('Clicked week:', m.week); setSelWeek(m.week); }} style={{ background: m.type === 'DELOAD' ? 'rgba(234, 179, 8, 0.1)' : '#000', borderRadius: '8px', padding: '12px', marginBottom: '8px', border: '1px solid ' + (m.type === 'DELOAD' ? '#eab308' : '#1a1a1a'), cursor: 'pointer', width: '100%', textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: 600, color: '#fff' }}>Týden {m.week}</span><span style={{ color: m.type === 'BASE' ? '#3b82f6' : m.type === 'BUILD' ? '#8b5cf6' : m.type === 'PEAK' ? '#ef4444' : '#eab308', fontSize: '11px', fontWeight: 600 }}>{m.type}</span></div>
-                <div style={{ color: '#666', fontSize: '12px' }}>{m.description}</div>
-              </button>
-            ))}
-            <h4 style={{ color: '#666', fontSize: '12px', margin: '20px 0 12px', textTransform: 'uppercase' }}>Typický týden</h4>
-            {MESO_DAYS.map(d => <div key={d.day} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1a1a1a' }}><span style={{ color: '#888' }}>{d.day}</span><span>{d.workout}</span></div>)}
-          </div>
-        )}
-
-        {view === 'workout' && selWeek && (
-          <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-            <button onClick={() => setSelWeek(null)} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>← Zpět na přehled</button>
-            <h3 style={{ color: '#22c55e', fontSize: '14px', fontWeight: 600, marginBottom: '16px', textAlign: 'center' }}>TÝDEN {selWeek} - {MESOCYCLE[selWeek - 1].type}</h3>
-            <div style={{ background: '#000', borderRadius: '8px', padding: '12px', marginBottom: '12px', border: '1px solid #1a1a1a' }}>
-              <div style={{ color: '#22c55e', fontSize: '12px', marginBottom: '8px' }}>{MESOCYCLE[selWeek - 1].description}</div>
-            </div>
-            <h4 style={{ color: '#666', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase' }}>Cvičení</h4>
-            {(WEEK_EXERCISES[selWeek] || []).map((exName, i) => {
-              const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
-              return (
-                <div key={i} onClick={() => ex && startW(ex)} style={{ background: '#000', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px', border: '1px solid #1a1a1a', cursor: ex ? 'pointer' : 'default', opacity: ex ? 1 : 0.5 }}>
-                  <span style={{ fontWeight: 500 }}>{exName}</span>
-                  {ex && <span style={{ float: 'right', color: '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {view === 'meso' && selWeek && (
-          <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-            <button onClick={() => setSelWeek(null)} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>← Zpět na přehled</button>
-            <h3 style={{ color: '#22c55e', fontSize: '14px', fontWeight: 600, marginBottom: '16px', textAlign: 'center' }}>TÝDEN {selWeek} - {MESOCYCLE[selWeek - 1].type}</h3>
-            <div style={{ background: '#000', borderRadius: '8px', padding: '12px', marginBottom: '12px', border: '1px solid #1a1a1a' }}>
-              <div style={{ color: '#22c55e', fontSize: '12px', marginBottom: '8px' }}>{MESOCYCLE[selWeek - 1].description}</div>
-            </div>
-            <h4 style={{ color: '#666', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase' }}>Cvičení tohoto týdne</h4>
-            {(WEEK_EXERCISES[selWeek] || []).map((exName, i) => {
-              const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
-              return (
-                <div key={i} onClick={() => ex && startW(ex)} style={{ background: '#000', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px', border: '1px solid #1a1a1a', cursor: ex ? 'pointer' : 'default', opacity: ex ? 1 : 0.5 }}>
-                  <span style={{ fontWeight: 500 }}>{exName}</span>
-                  {ex && <span style={{ float: 'right', color: '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {view !== 'workout' && view !== 'meso' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-            <button onClick={() => setView('weight')} style={{ background: view === 'weight' ? '#1a1a1a' : '#0a0a0a', border: view === 'weight' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>HMOTNOST</div>
-              <div style={{ fontSize: '22px', fontWeight: 600 }}>{lastWg > 0 ? lastWg + ' kg' : '--'}</div>
-            </button>
-            <button onClick={() => setView('food')} style={{ background: view === 'food' ? '#1a1a1a' : '#0a0a0a', border: view === 'food' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>DNES</div>
-              <div style={{ fontSize: '22px', fontWeight: 600, color: tdTot.calories > 0 ? '#22c55e' : '#fff' }}>{tdTot.calories > 0 ? tdTot.calories + ' kcal' : '--'}</div>
-            </button>
-          </div>
-        )}
 
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0a0a0a', borderTop: '1px solid #1a1a1a', padding: '12px 16px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
           {[{ k: 'workout', l: 'TRÉNINK', i: '🏋️' }, { k: 'weight', l: 'HMOTNOST', i: '⚖️' }, { k: 'food', l: 'KALORIE', i: '🍎' }].map(t => (
-            <button key={t.k} onClick={() => { setView(t.k as any); setSelWeek(null); }} style={{ background: 'none', border: 'none', color: view === t.k ? '#22c55e' : '#666', cursor: 'pointer', fontSize: '10px', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <button key={t.k} onClick={() => setView(t.k as any)} style={{ background: 'none', border: 'none', color: view === t.k ? '#22c55e' : '#666', cursor: 'pointer', fontSize: '10px', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '20px' }}>{t.i}</span>{t.l}
             </button>
           ))}
@@ -223,23 +143,21 @@ export default function Home() {
 
         {view === 'workout' && (
           <>
-            {/* Week Selector */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
               {MESOCYCLE.map(m => (
-                <button key={m.week} onClick={() => setSelWeek(m.week === selWeek ? null : m.week)} style={{ background: m.week === (selWeek || meso.week) ? '#22c55e' : '#0a0a0a', border: m.week === (selWeek || meso.week) ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 12px', color: m.week === (selWeek || meso.week) ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                <button key={m.week} onClick={() => setSelWeek(selWeek === m.week ? null : m.week)} style={{ background: m.week === currentWeek ? '#22c55e' : '#0a0a0a', border: m.week === currentWeek ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 14px', color: m.week === currentWeek ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
                   {m.week}
                 </button>
               ))}
             </div>
 
-            {/* Selected Week Exercises */}
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {selWeek || meso.week}</h3>
-              {(WEEK_EXERCISES[selWeek || meso.week] || []).map((exName, i) => {
+              <h3 style={{ color: '#22c55e', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {currentWeek} - {MESOCYCLE[currentWeek - 1].type}</h3>
+              {(WEEK_EXERCISES[currentWeek] || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
                 return (
-                  <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                    <button onClick={() => ex && startW(ex)} style={{ flex: 1, background: '#0a0a0a', border: '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5 }}>
+                  <div key={i} style={{ marginBottom: '8px' }}>
+                    <button onClick={() => ex && startW(ex)} style={{ width: '100%', background: '#0a0a0a', border: '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: '#fff', fontSize: '14px' }}>
                       <span style={{ fontWeight: 500 }}>{exName}</span>
                       <span style={{ color: '#666', fontSize: '12px' }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '-' : '?'} kg</span>
                     </button>
@@ -247,17 +165,6 @@ export default function Home() {
                 );
               })}
             </div>
-            {showAdd ? (
-              <div style={{ background: '#0a0a0a', borderRadius: '8px', padding: '16px' }}>
-                <input value={newExName} onChange={e => setNewExName(e.target.value)} placeholder="Název cviku..." autoFocus style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '14px', marginBottom: '12px' }} />
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={addEx} style={{ flex: 1, background: '#22c55e', border: 'none', borderRadius: '6px', padding: '10px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>Přidat</button>
-                  <button onClick={() => setShowAdd(false)} style={{ flex: 1, background: '#1a1a1a', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#666', cursor: 'pointer' }}>Zrušit</button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => setShowAdd(true)} style={{ width: '100%', padding: '14px', background: 'none', border: '1px dashed #333', borderRadius: '8px', color: '#666', cursor: 'pointer' }}>+ Přidat vlastní cvik</button>
-            )}
           </>
         )}
 
@@ -283,14 +190,16 @@ export default function Home() {
 
             {weightData.data.length >= 2 ? (
               <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                <div style={{ height: '150px', position: 'relative', marginBottom: '12px', borderLeft: '30px solid transparent' }}>
+                <div style={{ height: '150px', position: 'relative', marginBottom: '12px' }}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
-                    <span>{chartMax}</span><span>{((chartMax + chartMin) / 2).toFixed(0)}</span><span>{chartMin}</span>
+                    <span>{Math.max(...weightData.data.map(w => w.weight)) + 2}</span><span>{Math.min(...weightData.data.map(w => w.weight)) - 2}</span>
                   </div>
                   <div style={{ marginLeft: '35px', height: '100%', position: 'relative', borderBottom: '1px solid #222' }}>
                     {weightData.data.map((w, i) => {
+                      const minW = Math.min(...weightData.data.map(w => w.weight)) - 2;
+                      const maxW = Math.max(...weightData.data.map(w => w.weight)) + 2;
                       const left = (i / (weightData.data.length - 1)) * 100;
-                      const top = ((chartMax - w.weight) / (chartMax - chartMin)) * 100;
+                      const top = ((maxW - w.weight) / (maxW - minW)) * 100;
                       return (
                         <div key={w.id} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', transform: 'translate(-50%, 50%)' }} title={w.weight + ' kg - ' + fmtD(w.date)} />
                       );
