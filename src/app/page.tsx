@@ -20,6 +20,16 @@ const MESOCYCLE: Mesocycle[] = [
   { week: 8, type: 'DELOAD', description: '3x10 @ 50% 1RM' },
 ];
 
+const MESO_DAYS = [
+  { day: "Pondělí", workout: "Horní polovina" },
+  { day: "Úterý", workout: "Spodní polovina" },
+  { day: "Středa", workout: "Odpočinek" },
+  { day: "Čtvrtek", workout: "Horní polovina" },
+  { day: "Pátek", workout: "Spodní polovina" },
+  { day: "Sobota", workout: "Odpočinek / Dlouhý běh" },
+  { day: "Neděle", workout: "DELOAD - Lehký pohyb" },
+];
+
 const WEEK_EXERCISES: Record<number, string[]> = {
   1: ['Squat', 'Bench Press', 'Barbell Row', 'Overhead Press'],
   2: ['Squat', 'Bench Press', 'Pull-ups', 'Dumbbell Curl'],
@@ -165,6 +175,14 @@ export default function Home() {
                 );
               })}
             </div>
+
+            <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
+            {MESO_DAYS.map(d => (
+              <div key={d.day} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{d.day}</span>
+                <span style={{ color: d.workout.includes('DELOAD') ? '#eab308' : '#fff', fontSize: '13px' }}>{d.workout}</span>
+              </div>
+            ))}
           </>
         )}
 
