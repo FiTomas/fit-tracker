@@ -226,16 +226,16 @@ export default function Home() {
             {/* Week Selector */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
               {MESOCYCLE.map(m => (
-                <button key={m.week} onClick={() => setSelWeek(m.week)} style={{ background: m.week === meso.week ? '#22c55e' : '#0a0a0a', border: m.week === meso.week ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 12px', color: m.week === meso.week ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                <button key={m.week} onClick={() => setSelWeek(m.week === selWeek ? null : m.week)} style={{ background: m.week === (selWeek || meso.week) ? '#22c55e' : '#0a0a0a', border: m.week === (selWeek || meso.week) ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 12px', color: m.week === (selWeek || meso.week) ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>
                   {m.week}
                 </button>
               ))}
             </div>
 
-            {/* Current Week Exercises */}
+            {/* Selected Week Exercises */}
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {meso.week}</h3>
-              {(WEEK_EXERCISES[meso.week] || []).map((exName, i) => {
+              <h3 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {selWeek || meso.week}</h3>
+              {(WEEK_EXERCISES[selWeek || meso.week] || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
                 return (
                   <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
