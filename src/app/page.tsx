@@ -221,7 +221,7 @@ export default function Home() {
           ))}
         </div>
 
-        {view === 'workout' && !selWeek && (
+        {view === 'workout' && (
           <>
             {/* Week Selector */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
