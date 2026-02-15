@@ -141,9 +141,9 @@ export default function Home() {
         <h1 style={{ fontSize: '28px', fontWeight: 700 }}>FIT TRACKER</h1>
         <p style={{ color: '#666', margin: '4px 0 20px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
 
-        <div onClick={() => { setView(v => v === 'meso' ? 'workout' : 'meso'); setSelWeek(null); }} style={{ background: meso.type === 'DELOAD' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(59, 130, 246, 0.2)', border: '1px solid ' + (meso.type === 'DELOAD' ? '#eab308' : '#3b82f6'), borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', cursor: 'pointer' }}>
-          <span style={{ color: meso.type === 'DELOAD' ? '#eab308' : '#3b82f6', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{meso.type === 'DELOAD' ? '🔥 DELOAD WEEK' : 'WEEK ' + meso.week}</span>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{meso.description}</div>
+        <div onClick={() => { const next = (selWeek || meso.week) % 8 + 1; setSelWeek(next === meso.week ? null : next); }} style={{ background: (selWeek || meso.week) === 8 ? 'rgba(234, 179, 8, 0.2)' : 'rgba(59, 130, 248, 0.2)', border: '1px solid ' + (meso.type === 'DELOAD' ? '#eab308' : '#3b82f6'), borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', cursor: 'pointer' }}>
+          <span style={{ color: meso.type === 'DELOAD' ? '#eab308' : '#3b82f6', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>(selWeek || meso.week) === 8 ? '🔥 DELOAD WEEK' : 'WEEK ' + (selWeek || meso.week)</span>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{MESOCYCLE[(selWeek || meso.week) - 1].description}</div>
         </div>
 
         {view === 'meso' && !selWeek && (
