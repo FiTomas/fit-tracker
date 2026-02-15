@@ -7,7 +7,7 @@
 }
 
 body {
-  background: linear-gradient(180deg, #1a3d2e 0%, #0f2a1f 100%);
+  background: #000000;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -15,16 +15,16 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
+  background: #0a0a0a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(168, 230, 207, 0.3);
-  border-radius: 4px;
+  background: #333333;
+  border-radius: 3px;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
