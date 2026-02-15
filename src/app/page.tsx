@@ -72,6 +72,10 @@ export default function Home() {
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [view, setView] = useState<'workout' | 'weight' | 'food'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
+  const [activeDay, setActiveDay] = useState<number>(() => {
+    const d = new Date().getDay();
+    return d === 0 ? 6 : d - 1;
+  });
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
@@ -92,7 +96,30 @@ export default function Home() {
   const getLast = (id: string) => wHist.filter(w => w.exerciseId === id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const startW = (ex: Exercise) => { const t = getLast(ex.id) ? calcTargets(getLast(ex.id).sets) : { weight: 50, reps: 8 }; setSelEx(ex); setCurSets([{ reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }]); };
   const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean) => { const ns = [...curSets]; ns[i] = { ...ns[i], [f]: v }; setCurSets(ns); };
-  const finW = () => { if (!selEx) return; const cs = curSets.filter(s => s.completed); if (!cs.length) return; setWHist([{ id: Date.now().toString(), date: new Date().toISOString(), exerciseId: selEx.id, sets: cs }, ...wHist]); setSelEx(null); setCurSets([]); };
+  const finW = () => { 
+    if (!selEx) return; 
+    const cs = curSets.filter(s => s.completed); 
+    if (!cs.length) return; 
+    const today = new Date().toDateString();
+    const newLog = { id: Date.now().toString(), date: new Date().toISOString(), exerciseId: selEx.id, sets: cs };
+    setWHist([newLog, ...wHist]); 
+    
+    const dayExNames = dayExercises.map(e => e.toLowerCase());
+    const doneToday = wHist.filter(w => new Date(w.date).toDateString() === today).map(w => {
+      const ex = exercisesList.find(ex => ex.id === w.exerciseId);
+      return ex ? ex.name.toLowerCase() : '';
+    });
+    doneToday.push(selEx.name.toLowerCase());
+    
+    const allDone = dayExNames.length > 0 && dayExNames.every(de => doneToday.some(dt => dt.includes(de) || de.includes(dt)));
+    
+    if (allDone) {
+      setActiveDay((activeDay + 1) % 7);
+    }
+    
+    setSelEx(null); 
+    setCurSets([]); 
+  };
   const addWght = () => { if (!newWght || parseFloat(newWght) <= 0) return; setWght([{ id: Date.now().toString(), date: new Date().toISOString(), weight: parseFloat(newWght) }, ...wght]); setNewWght(''); };
   const [newWght, setNewWght] = useState('');
   const addMeal = () => { if (!mName.trim() || !mCals) return; setMeals([{ id: Date.now().toString(), date: new Date().toISOString(), name: mName, calories: parseInt(mCals) || 0, protein: parseInt(mPro) || 0, carbs: parseInt(mCarb) || 0, fat: parseInt(mFat) || 0 }, ...meals]); setMName(''); setMCals(''); setMPro(''); setMCarb(''); setMFat(''); };
@@ -109,6 +136,16 @@ export default function Home() {
   const lastWg = wght[0]?.weight || 0;
   const meso = getMesocycleWeek();
   const currentWeek = selWeek || meso.week;
+  const todayDay = new Date().getDay();
+  const currentDay = todayDay === 0 ? 6 : todayDay - 1;
+
+  const getDayExercises = (day: number) => {
+    const weekEx = WEEK_EXERCISES[currentWeek] || [];
+    if (day === 0 || day === 3) return weekEx.slice(0, 2);
+    if (day === 1 || day === 4) return weekEx.slice(2, 4);
+    return [];
+  };
+  const dayExercises = getDayExercises(activeDay);
 
   const weightData = useMemo(() => {
     if (wght.length < 2) return { data: [], trend: 0, avg: 0 };
@@ -177,10 +214,10 @@ export default function Home() {
             </div>
 
             <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
-            {MESO_DAYS.map(d => (
-              <div key={d.day} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{d.day}</span>
-                <span style={{ color: d.workout.includes('DELOAD') ? '#eab308' : '#fff', fontSize: '13px' }}>{d.workout}</span>
+            {MESO_DAYS.map((d, idx) => (
+              <div key={d.day} style={{ background: idx === activeDay ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: idx === activeDay ? '1px solid #22c55e' : '1px solid transparent' }}>
+                <span style={{ color: idx === activeDay ? '#22c55e' : '#888', fontSize: '13px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
+                <span style={{ color: d.workout.includes('DELOAD') ? '#eab308' : idx === activeDay ? '#22c55e' : '#fff', fontSize: '13px' }}>{d.workout}</span>
               </div>
             ))}
           </>
