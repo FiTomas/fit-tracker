@@ -305,7 +305,7 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
                 <input value={mCals} onChange={e => setMCals(e.target.value)} placeholder="kcal" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#22c55e', fontSize: '14px', textAlign: 'center' }} />
                 <input value={mPro} onChange={e => setMPro(e.target.value)} placeholder="B" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#ef4444', fontSize: '14px', textAlign: 'center' }} />
-                <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" style={{ background: '#Carb} onChange={e => setMCarb(e.target.value)} placeholder="S" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#3b82f6', fontSize: '14px', textAlign: 'center' }} />
+                <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#3b82f6', fontSize: '14px', textAlign: 'center' }} />
                 <input value={mFat} onChange={e => setMFat(e.target.value)} placeholder="T" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#eab308', fontSize: '14px', textAlign: 'center' }} />
               </div>
               <button onClick={addMeal} style={{ width: '100%', background: '#22c55e', border: 'none', borderRadius: '8px', padding: '12px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>Přidat jídlo</button>
