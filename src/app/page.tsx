@@ -94,6 +94,7 @@ export default function Home() {
     const f = localStorage.getItem('fitTracker_calorieGoal');
     const g = localStorage.getItem('fitTracker_weightGoal');
     if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) exercisesList = JSON.parse(d); if (e) setSavedMeals(JSON.parse(e)); if (f) setCalorieGoal(parseInt(f)); if (g) setWeightGoal(parseFloat(g));
+    const h = localStorage.getItem("fitTracker_completedWeeks"); if (h) setCompletedWeeks(JSON.parse(h));
   }, []);
 
   useEffect(() => {
@@ -104,7 +105,8 @@ export default function Home() {
     localStorage.setItem('fitTracker_savedMeals', JSON.stringify(savedMeals));
     localStorage.setItem('fitTracker_calorieGoal', calorieGoal.toString());
     localStorage.setItem('fitTracker_weightGoal', weightGoal.toString());
-  }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal]);
+    localStorage.setItem('fitTracker_completedWeeks', JSON.stringify(completedWeeks));
+  }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal, completedWeeks]);
 
   const getLast = (id: string) => wHist.filter(w => w.exerciseId === id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const startW = (ex: Exercise) => { const t = getLast(ex.id) ? calcTargets(getLast(ex.id).sets) : { weight: 50, reps: 8 }; setSelEx(ex); setCurSets([{ reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }]); };
