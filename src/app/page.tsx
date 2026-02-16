@@ -72,7 +72,7 @@ export default function Home() {
   const [wght, setWght] = useState<WeightEntry[]>([]);
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
-  const [view, setView] = useState<'workout' | 'weight' | 'food'>('workout');
+  const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
     const d = new Date().getDay();
@@ -233,7 +233,8 @@ export default function Home() {
         <p style={{ color: '#666', margin: '4px 0 20px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
 
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0a0a0a', borderTop: '1px solid #1a1a1a', padding: '12px 16px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
-          {[{ k: 'workout', l: 'TRÉNINK', i: '🏋️' }, { k: 'weight', l: 'HMOTNOST', i: '⚖️' }, { k: 'food', l: 'KALORIE', i: '🍎' }].map(t => (
+          {
+          [{ k: 'workout', l: 'TRÉNINK', i: '🏋️' }, { k: 'weight', l: 'HMOTNOST', i: '⚖️' }, { k: 'food', l: 'KALORIE', i: '🍎' }, { k: 'archive', l: 'ARCHIV', i: '📚' }].map(t => (
             <button key={t.k} onClick={() => setView(t.k as any)} style={{ background: 'none', border: 'none', color: view === t.k ? '#22c55e' : '#666', cursor: 'pointer', fontSize: '10px', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '20px' }}>{t.i}</span>{t.l}
             </button>
@@ -370,6 +371,18 @@ export default function Home() {
             </div>
             <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>HISTORIE</h3>
             {wght.slice(0, 10).map(e => <div key={e.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>{fmt(e.date)}</span><span style={{ fontWeight: 600 }}>{e.weight} kg</span></div>)}
+          </div>
+        )}
+
+        {view === 'archive' && (
+          <div>
+            <h3 style={{color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px'}}>ARCHIV</h3>
+            {wHist.length === 0 ? <div style={{color: '#666', textAlign: 'center', padding: '40px'}}>Zatím žádné tréninky</div> : 
+              wHist.slice(0, 20).map(w => {
+                const ex = exercisesList.find(e => e.id === w.exerciseId);
+                return ex ? <div key={w.id} style={{background: '#0a0a0a', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '12px'}}><span style={{color: '#22c55e'}}>{new Date(w.date).toLocaleDateString('cs-CZ', {day: 'numeric', month: 'short'})}</span> - {ex.name}</div> : null;
+              })
+            }
           </div>
         )}
 
