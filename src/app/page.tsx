@@ -516,6 +516,40 @@ export default function Home() {
           </div>
         )}
 
+        {showAddExercise && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.95)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', maxWidth: '400px', width: '100%', border: '1px solid #333' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ color: '#22c55e', fontSize: '16px', fontWeight: 600 }}>PŘIDAT CVIK</h3>
+                <button onClick={() => { setShowAddExercise(false); setNewExName(''); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '24px', lineHeight: 1 }}>×</button>
+              </div>
+              <input 
+                value={newExName} 
+                onChange={e => setNewExName(e.target.value)} 
+                placeholder="Název cviku" 
+                style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '8px', padding: '14px', color: '#fff', fontSize: '16px', marginBottom: '16px' }} 
+              />
+              <button 
+                onClick={() => {
+                  if (newExName.trim()) {
+                    const newEx: Exercise = {
+                      id: Date.now().toString(),
+                      name: newExName.trim(),
+                      category: 'CUSTOM'
+                    };
+                    setExercisesList([...exercisesList, newEx]);
+                    setNewExName('');
+                    setShowAddExercise(false);
+                  }
+                }} 
+                style={{ width: '100%', background: '#22c55e', border: 'none', borderRadius: '8px', padding: '14px', color: '#000', fontSize: '16px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Přidat
+              </button>
+            </div>
+          </div>
+        )}
+
         {selEx && curSets.length > 0 && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 200, overflow: 'auto', padding: '16px' }}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
