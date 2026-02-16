@@ -39,7 +39,7 @@ const WEEK_EXERCISES: Record<number, string[]> = {
   5: ['Deadlift', 'Pull-ups', 'Dumbbell Curl', 'Tricep Pushdown'],
   6: ['Squat', 'Bench Press', 'Overhead Press', 'Barbell Row'],
   7: ['Deadlift', 'Squat', 'Bench Press', 'Pull-ups'],
-  8: ['Squat', 'Bench Press', 'Row', 'Curl'],
+  8: ['Squat', 'Bench Press'],
 };
 
 const DEFAULT_EXERCISES: Exercise[] = [
@@ -172,7 +172,7 @@ export default function Home() {
     setCurSets(ns); 
     // Start rest timer when set is completed
     if (f === 'completed' && v === true && i < curSets.length - 1) {
-      setRestTimer(90); // 90 seconds default
+      setRestTimer(60); // 60 seconds (1 minute) default
       setRestTimerActive(true);
     }
   };
