@@ -55,6 +55,26 @@ const DEFAULT_EXERCISES: Exercise[] = [
   { id: '10', name: 'Lat Pulldown', category: 'BACK' },
 ];
 
+const CATEGORY_NAMES: Record<string, string> = {
+  CHEST: 'Hrudník',
+  BACK: 'Záda',
+  LEGS: 'Nohy',
+  SHOULDERS: 'Ramena',
+  BICEPS: 'Biceps',
+  TRICEPS: 'Triceps',
+  CUSTOM: 'Vlastní'
+};
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  CHEST: '💪',
+  BACK: '🦾',
+  LEGS: '🦵',
+  SHOULDERS: '🏋️',
+  BICEPS: '💪',
+  TRICEPS: '💪',
+  CUSTOM: '⭐'
+};
+
 const getWeekNumber = (date: Date): number => { const start = new Date(date.getFullYear(), 0, 1); const diff = date.getTime() - start.getTime(); return Math.ceil((diff + start.getDay() * 86400000) / 604800000); };
 const getMesocycleWeek = (): Mesocycle => { const w = getWeekNumber(new Date()) % 8; return MESOCYCLE[w === 0 ? 7 : w - 1]; };
 const calcTargets = (ls: WorkoutSet[]): { weight: number; reps: number } => {
@@ -79,6 +99,8 @@ export default function Home() {
   });
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [newExName, setNewExName] = useState('');
+  const [newExCategory, setNewExCategory] = useState('CUSTOM');
+  const [showWeeklyPlan, setShowWeeklyPlan] = useState(false);
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -271,40 +293,70 @@ export default function Home() {
 
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Týden {currentWeek} · {MESOCYCLE[currentWeek - 1].type}</h3>
-              {(dayExercises || []).map((exName, i) => {
-                const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
-                const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === exName.toLowerCase());
+              
+              {/* Plánované cviky pro dnešní den */}
+              {dayExercises.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>Dnes na plánu</div>
+                  {dayExercises.map((exName, i) => {
+                    const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
+                    const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === exName.toLowerCase());
+                    return (
+                      <div key={i} style={{ marginBottom: '8px' }}>
+                        <button onClick={() => ex && startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
+                          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{exName} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
+                          <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '–' : '?'} kg</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Cviky podle kategorií */}
+              {['CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'CUSTOM'].map(cat => {
+                const catExercises = exercisesList.filter(ex => ex.category === cat);
+                if (catExercises.length === 0) return null;
                 return (
-                  <div key={i} style={{ marginBottom: '8px' }}>
-                    <button onClick={() => ex && startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
-                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{exName} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
-                      <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '–' : '?'} kg</span>
-                    </button>
+                  <div key={cat} style={{ marginBottom: '20px' }}>
+                    <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>{CATEGORY_EMOJI[cat]}</span>
+                      <span>{CATEGORY_NAMES[cat]}</span>
+                    </div>
+                    {catExercises.map(ex => {
+                      const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
+                      return (
+                        <div key={ex.id} style={{ marginBottom: '8px' }}>
+                          <button onClick={() => startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
+                            <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{ex.name} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
+                            <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{getLast(ex.id)?.sets[0]?.weight || '–'} kg</span>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
-              {exercisesList.filter(ex => ex.category === 'CUSTOM').map(ex => {
-                const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
-                return (
-                  <div key={ex.id} style={{ marginBottom: '8px' }}>
-                    <button onClick={() => startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
-                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{ex.name} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
-                      <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{getLast(ex.id)?.sets[0]?.weight || '–'} kg</span>
-                    </button>
-                  </div>
-                );
-              })}
-              <button onClick={() => setShowAddExercise(true)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: '1px dashed var(--ios-separator)', borderRadius: '14px', padding: '18px', color: 'var(--ios-blue)', fontSize: '17px', cursor: 'pointer', marginTop: '8px', fontWeight: 600, minHeight: '56px', transition: 'all 0.2s ease' }}>+ Přidat cvik</button>
+              
+              <button onClick={() => setShowAddExercise(true)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: '1px dashed var(--ios-separator)', borderRadius: '14px', padding: '18px', color: 'var(--ios-blue)', fontSize: '17px', cursor: 'pointer', fontWeight: 600, minHeight: '56px', transition: 'all 0.2s ease' }}>+ Přidat cvik</button>
             </div>
 
-            <h4 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Plán týdne</h4>
-            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
-              {MESO_DAYS.map((d, idx) => (
-                <div key={d.day} onClick={() => setActiveDay(idx)} className="touch-feedback" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', borderBottom: idx < MESO_DAYS.length - 1 ? '0.5px solid var(--ios-separator)' : 'none', cursor: 'pointer', background: idx === activeDay ? 'var(--ios-bg-tertiary)' : 'transparent', transition: 'background 0.2s ease' }}>
-                  <span style={{ color: idx === activeDay ? 'var(--ios-green)' : 'var(--ios-label)', fontSize: '17px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
-                  <span style={{ color: d.workout.includes('DELOAD') ? 'var(--ios-orange)' : 'var(--ios-label-secondary)', fontSize: '17px' }}>{d.workout}</span>
+            {/* Collapsible Weekly Plan */}
+            <div style={{ marginBottom: '24px' }}>
+              <button onClick={() => setShowWeeklyPlan(!showWeeklyPlan)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                <span style={{ color: 'var(--ios-label)', fontSize: '17px', fontWeight: 600 }}>Plán týdne</span>
+                <span style={{ color: 'var(--ios-label-tertiary)', fontSize: '20px', transform: showWeeklyPlan ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>⌄</span>
+              </button>
+              {showWeeklyPlan && (
+                <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden', marginTop: '8px' }}>
+                  {MESO_DAYS.map((d, idx) => (
+                    <div key={d.day} onClick={() => setActiveDay(idx)} className="touch-feedback" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', borderBottom: idx < MESO_DAYS.length - 1 ? '0.5px solid var(--ios-separator)' : 'none', cursor: 'pointer', background: idx === activeDay ? 'var(--ios-bg-tertiary)' : 'transparent', transition: 'background 0.2s ease' }}>
+                      <span style={{ color: idx === activeDay ? 'var(--ios-green)' : 'var(--ios-label)', fontSize: '17px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
+                      <span style={{ color: d.workout.includes('DELOAD') ? 'var(--ios-orange)' : 'var(--ios-label-secondary)', fontSize: '17px' }}>{d.workout}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </>
         )}
@@ -529,7 +581,7 @@ export default function Home() {
         )}
 
         {showAddExercise && (
-          <div onClick={(e) => { if (e.target === e.currentTarget) { setShowAddExercise(false); setNewExName(''); }}} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={(e) => { if (e.target === e.currentTarget) { setShowAddExercise(false); setNewExName(''); setNewExCategory('CUSTOM'); }}} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <div style={{ background: 'var(--ios-bg-secondary)', borderTopLeftRadius: '22px', borderTopRightRadius: '22px', padding: '24px', maxWidth: '600px', width: '100%', paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
               <div style={{ width: '36px', height: '5px', background: 'var(--ios-separator)', borderRadius: '3px', margin: '0 auto 20px' }}></div>
               <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Přidat cvik</h3>
@@ -537,18 +589,35 @@ export default function Home() {
                 value={newExName} 
                 onChange={e => setNewExName(e.target.value)} 
                 placeholder="Název cviku" 
-                style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '16px', outline: 'none' }} 
+                style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '12px', outline: 'none' }} 
               />
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>Svalová partie</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {['CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'BICEPS', 'TRICEPS'].map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => setNewExCategory(cat)}
+                      className="touch-feedback"
+                      style={{ background: newExCategory === cat ? 'var(--ios-green)' : 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '12px', color: newExCategory === cat ? '#000' : 'var(--ios-label)', fontSize: '15px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s ease' }}
+                    >
+                      <span>{CATEGORY_EMOJI[cat]}</span>
+                      <span>{CATEGORY_NAMES[cat]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button 
                 onClick={() => {
                   if (newExName.trim()) {
                     const newEx: Exercise = {
                       id: Date.now().toString(),
                       name: newExName.trim(),
-                      category: 'CUSTOM'
+                      category: newExCategory
                     };
                     setExercisesList([...exercisesList, newEx]);
                     setNewExName('');
+                    setNewExCategory('CUSTOM');
                     setShowAddExercise(false);
                   }
                 }} 
