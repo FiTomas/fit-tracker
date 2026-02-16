@@ -529,17 +529,15 @@ export default function Home() {
         )}
 
         {showAddExercise && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.95)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', maxWidth: '400px', width: '100%', border: '1px solid #333' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ color: '#22c55e', fontSize: '16px', fontWeight: 600 }}>PŘIDAT CVIK</h3>
-                <button onClick={() => { setShowAddExercise(false); setNewExName(''); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '24px', lineHeight: 1 }}>×</button>
-              </div>
+          <div onClick={(e) => { if (e.target === e.currentTarget) { setShowAddExercise(false); setNewExName(''); }}} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ background: 'var(--ios-bg-secondary)', borderTopLeftRadius: '22px', borderTopRightRadius: '22px', padding: '24px', maxWidth: '600px', width: '100%', paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
+              <div style={{ width: '36px', height: '5px', background: 'var(--ios-separator)', borderRadius: '3px', margin: '0 auto 20px' }}></div>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Přidat cvik</h3>
               <input 
                 value={newExName} 
                 onChange={e => setNewExName(e.target.value)} 
                 placeholder="Název cviku" 
-                style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '8px', padding: '14px', color: '#fff', fontSize: '16px', marginBottom: '16px' }} 
+                style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '16px', outline: 'none' }} 
               />
               <button 
                 onClick={() => {
@@ -554,7 +552,8 @@ export default function Home() {
                     setShowAddExercise(false);
                   }
                 }} 
-                style={{ width: '100%', background: '#22c55e', border: 'none', borderRadius: '8px', padding: '14px', color: '#000', fontSize: '16px', fontWeight: 600, cursor: 'pointer' }}
+                className="touch-feedback"
+                style={{ width: '100%', background: 'var(--ios-green)', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontSize: '17px', fontWeight: 600, cursor: 'pointer', minHeight: '50px' }}
               >
                 Přidat
               </button>
@@ -563,30 +562,30 @@ export default function Home() {
         )}
 
         {selEx && curSets.length > 0 && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 200, overflow: 'auto', padding: '16px' }}>
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--ios-bg)', zIndex: 200, overflow: 'auto', paddingTop: 'max(env(safe-area-inset-top), 16px)', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))', paddingLeft: '16px', paddingRight: '16px' }}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <button onClick={() => { setSelEx(null); setCurSets([]); }} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>← ZPĚT</button>
-                <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 600 }}>{selEx.name}</h2>
-                <div style={{ width: '50px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingTop: '8px' }}>
+                <button onClick={() => { setSelEx(null); setCurSets([]); }} className="touch-feedback" style={{ background: 'none', border: 'none', color: 'var(--ios-blue)', cursor: 'pointer', fontSize: '17px', fontWeight: 400, padding: '8px' }}>Zpět</button>
+                <h2 style={{ color: 'var(--ios-label)', fontSize: '17px', fontWeight: 600 }}>{selEx.name}</h2>
+                <div style={{ width: '60px' }} />
               </div>
               {curSets.map((s, i) => (
-                <div key={i} style={{ background: s.completed ? 'rgba(34, 197, 94, 0.1)' : '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '12px', border: s.completed ? '1px solid #22c55e' : '1px solid #1a1a1a' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ color: '#666', fontSize: '12px', fontWeight: 600 }}>SET {i + 1}</span>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={s.completed} onChange={e => updSet(i, 'completed', e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#22c55e' }} />
-                      <span style={{ color: s.completed ? '#22c55e' : '#666', fontSize: '12px' }}>LOG</span>
+                <div key={i} style={{ background: 'var(--ios-bg-secondary)', borderRadius: '16px', padding: '20px', marginBottom: '12px', border: s.completed ? '2px solid var(--ios-green)' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <span style={{ color: 'var(--ios-label-secondary)', fontSize: '15px', fontWeight: 600 }}>Set {i + 1}</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <span style={{ color: s.completed ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>Hotovo</span>
+                      <input type="checkbox" checked={s.completed} onChange={e => updSet(i, 'completed', e.target.checked)} style={{ width: '24px', height: '24px', accentColor: 'var(--ios-green)', cursor: 'pointer' }} />
                     </label>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                    <div><label style={{ display: 'block', color: '#444', fontSize: '10px', marginBottom: '4px' }}>KG</label><input type="number" value={s.weight} onChange={e => updSet(i, 'weight', Number(e.target.value))} style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '18px', fontWeight: 600, textAlign: 'center' }} /></div>
-                    <div><label style={{ display: 'block', color: '#444', fontSize: '10px', marginBottom: '4px' }}>REPS</label><input type="number" value={s.reps} onChange={e => updSet(i, 'reps', Number(e.target.value))} style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '18px', fontWeight: 600, textAlign: 'center' }} /></div>
-                    <div><label style={{ display: 'block', color: '#444', fontSize: '10px', marginBottom: '4px' }}>RIR</label><input type="number" min="0" max="5" value={s.rir} onChange={e => updSet(i, 'rir', Number(e.target.value))} style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: s.rir <= 2 ? '#22c55e' : s.rir <= 3 ? '#eab308' : '#ef4444', fontSize: '18px', fontWeight: 600, textAlign: 'center' }} /></div>
+                    <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>kg</label><input type="number" inputMode="decimal" value={s.weight} onChange={e => updSet(i, 'weight', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: 'var(--ios-label)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
+                    <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>opak.</label><input type="number" inputMode="numeric" value={s.reps} onChange={e => updSet(i, 'reps', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: 'var(--ios-label)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
+                    <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>RIR</label><input type="number" inputMode="numeric" min="0" max="5" value={s.rir} onChange={e => updSet(i, 'rir', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: s.rir <= 2 ? 'var(--ios-green)' : s.rir <= 3 ? 'var(--ios-orange)' : 'var(--ios-red)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
                   </div>
                 </div>
               ))}
-              <button onClick={finW} style={{ width: '100%', background: '#22c55e', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontSize: '16px', fontWeight: 700, cursor: 'pointer', marginTop: '8px' }}>SAVE WORKOUT</button>
+              <button onClick={finW} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-green)', border: 'none', borderRadius: '14px', padding: '18px', color: '#000', fontSize: '17px', fontWeight: 600, cursor: 'pointer', marginTop: '12px', minHeight: '56px' }}>Uložit trénink</button>
             </div>
           </div>
         )}
