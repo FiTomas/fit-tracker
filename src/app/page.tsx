@@ -278,6 +278,7 @@ export default function Home() {
                   </div>
                 );
               })}
+              <button onClick={() => setShowAddExercise(true)} style={{ width: '100%', background: '#0a0a0a', border: '1px dashed #333', borderRadius: '8px', padding: '12px', color: '#666', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>+ Přidat cvik</button>
             </div>
 
 
