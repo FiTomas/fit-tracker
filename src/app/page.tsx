@@ -85,6 +85,14 @@ const calcTargets = (ls: WorkoutSet[]): { weight: number; reps: number } => {
   return { weight: bs.rir <= 1 ? Math.round((bs.weight + 2.5) / 2.5) * 2.5 : bs.weight, reps: bs.rir >= 3 ? Math.min(bs.reps + 1, 12) : bs.reps };
 };
 
+const getProgressSuggestion = (lastLog: WorkoutLog | undefined): { text: string; type: 'weight' | 'reps' | 'none' } => {
+  if (!lastLog || !lastLog.sets || lastLog.sets.length === 0) return { text: '', type: 'none' };
+  const bestSet = lastLog.sets.reduce((a, b) => a.reps > b.reps || (a.reps === b.reps && a.weight > b.weight) ? a : b);
+  if (bestSet.rir <= 1) return { text: `+2.5 kg`, type: 'weight' };
+  if (bestSet.rir <= 2 && bestSet.reps < 12) return { text: `+1 opak.`, type: 'reps' };
+  return { text: '', type: 'none' };
+};
+
 export default function Home() {
   const [selEx, setSelEx] = useState<Exercise | null>(null);
   const [curSets, setCurSets] = useState<WorkoutSet[]>([]);
@@ -101,6 +109,9 @@ export default function Home() {
   const [newExName, setNewExName] = useState('');
   const [newExCategory, setNewExCategory] = useState('CUSTOM');
   const [showWeeklyPlan, setShowWeeklyPlan] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [restTimer, setRestTimer] = useState<number | null>(null);
+  const [restTimerActive, setRestTimerActive] = useState(false);
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -137,9 +148,60 @@ export default function Home() {
     localStorage.setItem('fitTracker_completedWeeks', JSON.stringify(completedWeeks));
   }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal, completedWeeks, exercisesList]);
 
+  // Rest Timer Countdown
+  useEffect(() => {
+    if (!restTimerActive || restTimer === null) return;
+    if (restTimer <= 0) {
+      setRestTimerActive(false);
+      setRestTimer(null);
+      // Vibrate when timer finishes (if supported)
+      if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+      return;
+    }
+    const interval = setInterval(() => {
+      setRestTimer(prev => prev !== null ? prev - 1 : null);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [restTimer, restTimerActive]);
+
   const getLast = (id: string) => wHist.filter(w => w.exerciseId === id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const startW = (ex: Exercise) => { const t = getLast(ex.id) ? calcTargets(getLast(ex.id).sets) : { weight: 50, reps: 8 }; setSelEx(ex); setCurSets([{ reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }]); };
-  const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean) => { const ns = [...curSets]; ns[i] = { ...ns[i], [f]: v }; setCurSets(ns); };
+  const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean) => { 
+    const ns = [...curSets]; 
+    ns[i] = { ...ns[i], [f]: v }; 
+    setCurSets(ns); 
+    // Start rest timer when set is completed
+    if (f === 'completed' && v === true && i < curSets.length - 1) {
+      setRestTimer(90); // 90 seconds default
+      setRestTimerActive(true);
+    }
+  };
+  
+  const quickAdd = (ex: Exercise) => {
+    const lastLog = getLast(ex.id);
+    if (!lastLog) {
+      startW(ex);
+      return;
+    }
+    const bestSet = lastLog.sets.reduce((a, b) => a.reps > b.reps || (a.reps === b.reps && a.weight > b.weight) ? a : b);
+    const newLog = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      exerciseId: ex.id,
+      sets: [{ ...bestSet, completed: true }]
+    };
+    setWHist([newLog, ...wHist]);
+  };
+
+  const toggleCategory = (cat: string) => {
+    const newCollapsed = new Set(collapsedCategories);
+    if (newCollapsed.has(cat)) {
+      newCollapsed.delete(cat);
+    } else {
+      newCollapsed.add(cat);
+    }
+    setCollapsedCategories(newCollapsed);
+  };
   const finW = () => { 
     if (!selEx) return; 
     const cs = curSets.filter(s => s.completed); 
@@ -313,24 +375,58 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Cviky podle kategorií */}
+              {/* Cviky podle kategorií - Collapsible + Progressive Overload Tips */}
               {['CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'CUSTOM'].map(cat => {
                 const catExercises = exercisesList.filter(ex => ex.category === cat);
                 if (catExercises.length === 0) return null;
+                const isCollapsed = collapsedCategories.has(cat);
                 return (
-                  <div key={cat} style={{ marginBottom: '20px' }}>
-                    <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{CATEGORY_EMOJI[cat]}</span>
-                      <span>{CATEGORY_NAMES[cat]}</span>
-                    </div>
-                    {catExercises.map(ex => {
+                  <div key={cat} style={{ marginBottom: '16px' }}>
+                    <button 
+                      onClick={() => toggleCategory(cat)} 
+                      className="touch-feedback"
+                      style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '8px 4px', cursor: 'pointer', marginBottom: isCollapsed ? '0' : '8px' }}
+                    >
+                      <div style={{ color: 'var(--ios-label-secondary)', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{CATEGORY_EMOJI[cat]}</span>
+                        <span>{CATEGORY_NAMES[cat]}</span>
+                        <span style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', fontWeight: 400 }}>({catExercises.length})</span>
+                      </div>
+                      <span style={{ color: 'var(--ios-label-tertiary)', fontSize: '20px', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>⌄</span>
+                    </button>
+                    {!isCollapsed && catExercises.map(ex => {
                       const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
+                      const lastLog = getLast(ex.id);
+                      const suggestion = getProgressSuggestion(lastLog);
                       return (
                         <div key={ex.id} style={{ marginBottom: '8px' }}>
-                          <button onClick={() => startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
-                            <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{ex.name} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
-                            <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{getLast(ex.id)?.sets[0]?.weight || '–'} kg</span>
-                          </button>
+                          <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+                            <button onClick={() => startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'transparent', border: 'none', padding: '18px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--ios-label)', fontSize: '17px', transition: 'all 0.2s ease' }}>
+                              <div style={{ flex: 1, textAlign: 'left' }}>
+                                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  {ex.name} 
+                                  {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}
+                                </div>
+                                {suggestion.type !== 'none' && (
+                                  <div style={{ fontSize: '13px', color: 'var(--ios-green)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span>🔼</span>
+                                    <span>{suggestion.text}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{lastLog?.sets[0]?.weight || '–'} kg</span>
+                            </button>
+                            {lastLog && (
+                              <button 
+                                onClick={() => quickAdd(ex)} 
+                                className="touch-feedback"
+                                style={{ width: '100%', background: 'rgba(48, 209, 88, 0.1)', border: 'none', borderTop: '0.5px solid var(--ios-separator)', padding: '12px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', color: 'var(--ios-green)', fontSize: '15px', fontWeight: 600 }}
+                              >
+                                <span>⚡</span>
+                                <span>Quick Add {lastLog.sets[0].weight}kg × {lastLog.sets[0].reps}</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -759,6 +855,33 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+              
+              {/* Rest Timer */}
+              {restTimerActive && restTimer !== null && (
+                <div style={{ marginTop: '16px', marginBottom: '16px', background: 'var(--ios-bg-secondary)', borderRadius: '16px', padding: '20px', textAlign: 'center', border: '2px solid var(--ios-orange)' }}>
+                  <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>Odpočinek</div>
+                  <div style={{ fontSize: '48px', fontWeight: 700, color: 'var(--ios-orange)', marginBottom: '12px' }}>
+                    {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, '0')}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => { setRestTimer(restTimer + 30); }} 
+                      className="touch-feedback"
+                      style={{ flex: 1, background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--ios-label)', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      +30s
+                    </button>
+                    <button 
+                      onClick={() => { setRestTimerActive(false); setRestTimer(null); }} 
+                      className="touch-feedback"
+                      style={{ flex: 1, background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--ios-label)', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Skip
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <button onClick={finW} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-green)', border: 'none', borderRadius: '14px', padding: '18px', color: '#000', fontSize: '17px', fontWeight: 600, cursor: 'pointer', marginTop: '12px', minHeight: '56px' }}>Uložit trénink</button>
             </div>
           </div>
