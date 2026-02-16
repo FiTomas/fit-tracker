@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --ios-bg: #0d0d0d;
-  --ios-bg-secondary: #1c1c1e;
-  --ios-bg-tertiary: #2c2c2e;
+  --ios-bg: #121212;
+  --ios-bg-secondary: #1e1e1e;
+  --ios-bg-tertiary: #2a2a2a;
   --ios-label: #ffffff;
   --ios-label-secondary: #ebebf5;
   --ios-label-tertiary: #ebebf599;
