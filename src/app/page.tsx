@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import MesocycleTemplateBuilder from '@/components/MesocycleTemplateBuilder';
+import MesocycleTemplateManager from '@/components/MesocycleTemplateManager';
 
 interface Exercise { id: string; name: string; category: string; }
 interface WorkoutSet { reps: number; weight: number; rir: number; completed: boolean; note?: string; }
@@ -10,6 +12,30 @@ interface MealEntry { id: string; date: string; name: string; calories: number; 
 interface Mesocycle { week: number; type: 'BASE' | 'BUILD' | 'PEAK' | 'DELOAD'; description: string; }
 interface SavedMeal { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; }
 interface WorkoutTemplate { id: string; name: string; exerciseIds: string[]; }
+
+// Mesocycle Template Interfaces
+interface DayConfig {
+  dayIndex: number;
+  dayName: string;
+  workout: string;
+  exerciseIds: string[];
+  isRestDay: boolean;
+}
+
+interface WeekConfig {
+  weekNumber: number;
+  phase: 'BASE' | 'BUILD' | 'PEAK' | 'DELOAD';
+  description: string;
+  days: DayConfig[];
+}
+
+interface MesocycleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  weeks: WeekConfig[];
+  createdAt: string;
+}
 
 const MESOCYCLE: Mesocycle[] = [
   { week: 1, type: 'BASE', description: '4x10 @ 70% 1RM' },
@@ -119,7 +145,7 @@ export default function Home() {
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [selectedExercisesForTemplate, setSelectedExercisesForTemplate] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
+  const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive' | 'templates'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
     const d = new Date().getDay();
@@ -131,6 +157,12 @@ export default function Home() {
   const [foodPeriod, setFoodPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [calorieGoal, setCalorieGoal] = useState<number>(2500);
   const [weightGoal, setWeightGoal] = useState<number>(85);
+  
+  // Mesocycle Templates State
+  const [mesocycleTemplates, setMesocycleTemplates] = useState<MesocycleTemplate[]>([]);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MesocycleTemplate | null>(null);
 
   useEffect(() => {
     const a = localStorage.getItem('fitTracker_workouts');
@@ -142,10 +174,14 @@ export default function Home() {
     const g = localStorage.getItem('fitTracker_weightGoal');
     const i = localStorage.getItem('fitTracker_darkMode');
     const j = localStorage.getItem('fitTracker_templates');
+    const k = localStorage.getItem('fitTracker_mesocycleTemplates');
+    const l = localStorage.getItem('fitTracker_activeTemplate');
     if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) setExercisesList(JSON.parse(d)); if (e) setSavedMeals(JSON.parse(e)); if (f) setCalorieGoal(parseInt(f)); if (g) setWeightGoal(parseFloat(g));
     const h = localStorage.getItem("fitTracker_completedWeeks"); if (h) setCompletedWeeks(JSON.parse(h));
     if (i !== null) setDarkMode(i === 'true');
     if (j) setWorkoutTemplates(JSON.parse(j));
+    if (k) setMesocycleTemplates(JSON.parse(k));
+    if (l) setActiveTemplateId(l);
   }, []);
 
   // Apply dark/light mode
@@ -165,7 +201,9 @@ export default function Home() {
     localStorage.setItem('fitTracker_calorieGoal', calorieGoal.toString());
     localStorage.setItem('fitTracker_weightGoal', weightGoal.toString());
     localStorage.setItem('fitTracker_completedWeeks', JSON.stringify(completedWeeks));
-  }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal, completedWeeks, exercisesList]);
+    localStorage.setItem('fitTracker_mesocycleTemplates', JSON.stringify(mesocycleTemplates));
+    if (activeTemplateId) localStorage.setItem('fitTracker_activeTemplate', activeTemplateId);
+  }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal, completedWeeks, exercisesList, mesocycleTemplates, activeTemplateId]);
 
   // Rest Timer Countdown
   useEffect(() => {
@@ -231,6 +269,64 @@ export default function Home() {
       startW(firstEx);
     }
   };
+
+  // Mesocycle Template Functions
+  const saveMesocycleTemplate = (template: Omit<MesocycleTemplate, 'id' | 'createdAt'>) => {
+    const newTemplate: MesocycleTemplate = {
+      ...template,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+    setMesocycleTemplates([...mesocycleTemplates, newTemplate]);
+  };
+
+  const updateMesocycleTemplate = (id: string, updates: Partial<MesocycleTemplate>) => {
+    setMesocycleTemplates(mesocycleTemplates.map(t => 
+      t.id === id ? { ...t, ...updates } : t
+    ));
+  };
+
+  const deleteMesocycleTemplate = (id: string) => {
+    setMesocycleTemplates(mesocycleTemplates.filter(t => t.id !== id));
+    if (activeTemplateId === id) {
+      setActiveTemplateId(null);
+    }
+  };
+
+  const applyMesocycleTemplate = (templateId: string) => {
+    const template = mesocycleTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    setActiveTemplateId(templateId);
+    // Reset completed weeks when applying new template
+    setCompletedWeeks([]);
+    setActiveDay(0);
+    setSelWeek(1);
+    alert(`Šablona "${template.name}" byla aplikována! Začínáš s týdnem 1.`);
+  };
+
+  const getActiveMesocycle = (): { weeks: WeekConfig[], currentWeek: number } => {
+    const template = mesocycleTemplates.find(t => t.id === activeTemplateId);
+    if (template) {
+      return { weeks: template.weeks, currentWeek: currentWeek };
+    }
+    // Fallback to default if no template active
+    return { 
+      weeks: MESOCYCLE.map((m, i) => ({
+        weekNumber: i + 1,
+        phase: m.type,
+        description: m.description,
+        days: MESO_DAYS.map((d, idx) => ({
+          dayIndex: idx,
+          dayName: d.day,
+          workout: d.workout,
+          exerciseIds: [],
+          isRestDay: d.workout.includes('Odpočinek')
+        }))
+      })),
+      currentWeek: currentWeek
+    };
+  };
   const finW = () => { 
     if (!selEx) return; 
     const cs = curSets.filter(s => s.completed); 
@@ -293,6 +389,20 @@ export default function Home() {
   const currentWeek = selWeek || meso.week;
 
   const getDayExercises = (day: number) => {
+    const { weeks } = getActiveMesocycle();
+    const currentWeekConfig = weeks.find(w => w.weekNumber === currentWeek);
+    
+    if (currentWeekConfig) {
+      const dayConfig = currentWeekConfig.days[day];
+      if (dayConfig && !dayConfig.isRestDay && dayConfig.exerciseIds.length > 0) {
+        // Return exercise names from IDs
+        return dayConfig.exerciseIds
+          .map(id => exercisesList.find(ex => ex.id === id)?.name)
+          .filter(Boolean) as string[];
+      }
+    }
+    
+    // Fallback to old system
     const weekEx = WEEK_EXERCISES[currentWeek] || [];
     if (day === 0 || day === 3) return weekEx.slice(0, 2);
     if (day === 1 || day === 4) return weekEx.slice(2, 4);
@@ -404,11 +514,17 @@ export default function Home() {
           );
         })()}
 
-        <div className="ios-glass" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '0.5px solid var(--ios-separator)', paddingTop: '8px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)', paddingLeft: '8px', paddingRight: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
+        <div className="ios-glass" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '0.5px solid var(--ios-separator)', paddingTop: '8px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)', paddingLeft: '4px', paddingRight: '4px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
           {
-          [{ k: 'workout', l: 'Trénink', i: '🏋️' }, { k: 'weight', l: 'Hmotnost', i: '⚖️' }, { k: 'food', l: 'Kalorie', i: '🍎' }, { k: 'archive', l: 'Archiv', i: '📚' }].map(t => (
-            <button key={t.k} onClick={() => setView(t.k as any)} className="touch-feedback" style={{ background: 'none', border: 'none', color: view === t.k ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', cursor: 'pointer', fontSize: '10px', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '8px 12px', minWidth: '60px', transition: 'all 0.2s ease' }}>
-              <span style={{ fontSize: '26px' }}>{t.i}</span>{t.l}
+          [
+            { k: 'workout', l: 'Trénink', i: '🏋️' }, 
+            { k: 'templates', l: 'Plány', i: '📋' }, 
+            { k: 'weight', l: 'Hmotnost', i: '⚖️' }, 
+            { k: 'food', l: 'Kalorie', i: '🍎' }, 
+            { k: 'archive', l: 'Archiv', i: '📚' }
+          ].map(t => (
+            <button key={t.k} onClick={() => setView(t.k as any)} className="touch-feedback" style={{ background: 'none', border: 'none', color: view === t.k ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', cursor: 'pointer', fontSize: '10px', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '6px 8px', minWidth: '50px', flex: 1, transition: 'all 0.2s ease' }}>
+              <span style={{ fontSize: '24px' }}>{t.i}</span>{t.l}
             </button>
           ))}
         </div>
@@ -1061,6 +1177,47 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Mesocycle Template Manager */}
+      {view === 'templates' && !showTemplateBuilder && (
+        <MesocycleTemplateManager
+          templates={mesocycleTemplates}
+          activeTemplateId={activeTemplateId}
+          onApply={applyMesocycleTemplate}
+          onEdit={(template) => {
+            setEditingTemplate(template);
+            setShowTemplateBuilder(true);
+          }}
+          onDelete={deleteMesocycleTemplate}
+          onCreate={() => {
+            setEditingTemplate(null);
+            setShowTemplateBuilder(true);
+          }}
+          onClose={() => setView('workout')}
+        />
+      )}
+
+      {/* Mesocycle Template Builder */}
+      {showTemplateBuilder && (
+        <MesocycleTemplateBuilder
+          exercises={exercisesList}
+          initialTemplate={editingTemplate || undefined}
+          onSave={(template) => {
+            if (editingTemplate) {
+              updateMesocycleTemplate(editingTemplate.id, template);
+            } else {
+              saveMesocycleTemplate(template);
+            }
+            setShowTemplateBuilder(false);
+            setEditingTemplate(null);
+            setView('templates');
+          }}
+          onCancel={() => {
+            setShowTemplateBuilder(false);
+            setEditingTemplate(null);
+          }}
+        />
+      )}
     </div>
   );
 }
