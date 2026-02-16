@@ -1,30 +1,57 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ios-bg: #000000;
+  --ios-bg-secondary: #1c1c1e;
+  --ios-bg-tertiary: #2c2c2e;
+  --ios-label: #ffffff;
+  --ios-label-secondary: #ebebf5;
+  --ios-label-tertiary: #ebebf599;
+  --ios-separator: #38383a;
+  --ios-green: #30d158;
+  --ios-blue: #0a84ff;
+  --ios-red: #ff453a;
+  --ios-orange: #ff9f0a;
+  --ios-yellow: #ffd60a;
+}
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: #000000;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
-  color: #ffffff;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* iOS-style scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  height: 0px;
 }
 
-::-webkit-scrollbar-track {
-  background: #0a0a0a;
+/* Disable default button styles */
+button {
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 3px;
+/* Input styles */
+input {
+  -webkit-appearance: none;
+  border-radius: 10px;
+  font-family: inherit;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -33,6 +60,25 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-input[type="number"] {
-  -moz-appearance: textfield;
+/* Touch feedback */
+.touch-feedback:active {
+  opacity: 0.6;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* iOS frosted glass */
+.ios-glass {
+  background: rgba(28, 28, 30, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Safe area padding */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 16px);
 }

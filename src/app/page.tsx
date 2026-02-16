@@ -245,40 +245,40 @@ export default function Home() {
   }, [meals, foodPeriod]);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', padding: '16px', fontFamily: '-apple-system', color: '#fff', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--ios-bg)', paddingTop: 'max(env(safe-area-inset-top), 16px)', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', paddingLeft: '16px', paddingRight: '16px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700 }}>FIT TRACKER</h1>
-        <p style={{ color: '#666', margin: '4px 0 20px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        <h1 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.01em', marginBottom: '2px' }}>Fit Tracker</h1>
+        <p style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px', marginBottom: '24px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
 
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0a0a0a', borderTop: '1px solid #1a1a1a', padding: '12px 16px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
+        <div className="ios-glass" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '0.5px solid var(--ios-separator)', paddingTop: '8px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)', paddingLeft: '8px', paddingRight: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
           {
-          [{ k: 'workout', l: 'TRÉNINK', i: '🏋️' }, { k: 'weight', l: 'HMOTNOST', i: '⚖️' }, { k: 'food', l: 'KALORIE', i: '🍎' }, { k: 'archive', l: 'ARCHIV', i: '📚' }].map(t => (
-            <button key={t.k} onClick={() => setView(t.k as any)} style={{ background: 'none', border: 'none', color: view === t.k ? '#22c55e' : '#666', cursor: 'pointer', fontSize: '10px', fontWeight: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '20px' }}>{t.i}</span>{t.l}
+          [{ k: 'workout', l: 'Trénink', i: '🏋️' }, { k: 'weight', l: 'Hmotnost', i: '⚖️' }, { k: 'food', l: 'Kalorie', i: '🍎' }, { k: 'archive', l: 'Archiv', i: '📚' }].map(t => (
+            <button key={t.k} onClick={() => setView(t.k as any)} className="touch-feedback" style={{ background: 'none', border: 'none', color: view === t.k ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', cursor: 'pointer', fontSize: '10px', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '8px 12px', minWidth: '60px', transition: 'all 0.2s ease' }}>
+              <span style={{ fontSize: '26px' }}>{t.i}</span>{t.l}
             </button>
           ))}
         </div>
 
         {view === 'workout' && (
           <>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
               {MESOCYCLE.map(m => (
-                <button key={m.week} onClick={() => setSelWeek(selWeek === m.week ? null : m.week)} style={{ background: m.week === currentWeek ? '#22c55e' : '#0a0a0a', border: m.week === currentWeek ? 'none' : '1px solid #333', borderRadius: '8px', padding: '8px 14px', color: m.week === currentWeek ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                <button key={m.week} onClick={() => setSelWeek(selWeek === m.week ? null : m.week)} className="touch-feedback" style={{ background: m.week === currentWeek ? 'var(--ios-green)' : 'var(--ios-bg-secondary)', border: 'none', borderRadius: '12px', padding: '10px 18px', color: m.week === currentWeek ? '#000' : 'var(--ios-label-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '15px', whiteSpace: 'nowrap', minWidth: '50px', transition: 'all 0.2s ease' }}>
                   {m.week}
                 </button>
               ))}
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#22c55e', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {currentWeek} - {MESOCYCLE[currentWeek - 1].type}</h3>
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Týden {currentWeek} · {MESOCYCLE[currentWeek - 1].type}</h3>
               {(dayExercises || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
                 const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === exName.toLowerCase());
                 return (
                   <div key={i} style={{ marginBottom: '8px' }}>
-                    <button onClick={() => ex && startW(ex)} style={{ width: '100%', background: isCompleted ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', border: isCompleted ? '1px solid #22c55e' : '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: '#fff', fontSize: '14px' }}>
-                      <span style={{ fontWeight: 500 }}>{exName} {isCompleted && '✓'}</span>
-                      <span style={{ color: isCompleted ? '#22c55e' : '#666', fontSize: '12px' }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '-' : '?'} kg</span>
+                    <button onClick={() => ex && startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
+                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{exName} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
+                      <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '–' : '?'} kg</span>
                     </button>
                   </div>
                 );
@@ -287,23 +287,25 @@ export default function Home() {
                 const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
                 return (
                   <div key={ex.id} style={{ marginBottom: '8px' }}>
-                    <button onClick={() => startW(ex)} style={{ width: '100%', background: isCompleted ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', border: isCompleted ? '1px solid #22c55e' : '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', fontSize: '14px' }}>
-                      <span style={{ fontWeight: 500 }}>{ex.name} {isCompleted && '✓'}</span>
-                      <span style={{ color: isCompleted ? '#22c55e' : '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>
+                    <button onClick={() => startW(ex)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--ios-label)', fontSize: '17px', minHeight: '56px', transition: 'all 0.2s ease' }}>
+                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>{ex.name} {isCompleted && <span style={{ color: 'var(--ios-green)' }}>✓</span>}</span>
+                      <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{getLast(ex.id)?.sets[0]?.weight || '–'} kg</span>
                     </button>
                   </div>
                 );
               })}
-              <button onClick={() => setShowAddExercise(true)} style={{ width: '100%', background: '#0a0a0a', border: '1px dashed #333', borderRadius: '8px', padding: '12px', color: '#666', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>+ Přidat cvik</button>
+              <button onClick={() => setShowAddExercise(true)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: '1px dashed var(--ios-separator)', borderRadius: '14px', padding: '18px', color: 'var(--ios-blue)', fontSize: '17px', cursor: 'pointer', marginTop: '8px', fontWeight: 600, minHeight: '56px', transition: 'all 0.2s ease' }}>+ Přidat cvik</button>
             </div>
 
-            <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
-            {MESO_DAYS.map((d, idx) => (
-              <div key={d.day} onClick={() => setActiveDay(idx)} style={{ background: idx === activeDay ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: idx === activeDay ? '1px solid #22c55e' : '1px solid transparent', cursor: 'pointer' }}>
-                <span style={{ color: idx === activeDay ? '#22c55e' : '#888', fontSize: '13px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
-                <span style={{ color: d.workout.includes('DELOAD') ? '#eab308' : idx === activeDay ? '#22c55e' : '#fff', fontSize: '13px' }}>{d.workout}</span>
-              </div>
-            ))}
+            <h4 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Plán týdne</h4>
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+              {MESO_DAYS.map((d, idx) => (
+                <div key={d.day} onClick={() => setActiveDay(idx)} className="touch-feedback" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', borderBottom: idx < MESO_DAYS.length - 1 ? '0.5px solid var(--ios-separator)' : 'none', cursor: 'pointer', background: idx === activeDay ? 'var(--ios-bg-tertiary)' : 'transparent', transition: 'background 0.2s ease' }}>
+                  <span style={{ color: idx === activeDay ? 'var(--ios-green)' : 'var(--ios-label)', fontSize: '17px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
+                  <span style={{ color: d.workout.includes('DELOAD') ? 'var(--ios-orange)' : 'var(--ios-label-secondary)', fontSize: '17px' }}>{d.workout}</span>
+                </div>
+              ))}
+            </div>
           </>
         )}
 
