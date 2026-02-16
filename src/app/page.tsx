@@ -79,11 +79,6 @@ export default function Home() {
   });
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [newExName, setNewExName] = useState('');
-  const [exercisesList, setExercisesList] = useState<Exercise[]>(() => {
-    if (typeof window === 'undefined') return DEFAULT_EXERCISES;
-    const saved = localStorage.getItem('fitTracker_exercises');
-    return saved ? JSON.parse(saved) : DEFAULT_EXERCISES;
-  });
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -92,8 +87,6 @@ export default function Home() {
   });
   const [completedWeeks, setCompletedWeeks] = useState<number[]>([]);
   const [showMesoComplete, setShowMesoComplete] = useState(false);
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [newExName, setNewExName] = useState('');
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
   const [foodPeriod, setFoodPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [calorieGoal, setCalorieGoal] = useState<number>(2500);
