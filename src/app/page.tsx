@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import MesocycleTemplateBuilder from '@/components/MesocycleTemplateBuilder';
 import MesocycleTemplateManager from '@/components/MesocycleTemplateManager';
+import BarcodeScanner from '@/components/BarcodeScanner';
+import FoodQuantityModal from '@/components/FoodQuantityModal';
 
 interface Exercise { id: string; name: string; category: string; }
 interface WorkoutSet { reps: number; weight: number; rir: number; completed: boolean; note?: string; }
@@ -163,6 +165,10 @@ export default function Home() {
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MesocycleTemplate | null>(null);
+  
+  // Barcode Scanner State
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [scannedFoodData, setScannedFoodData] = useState<{ name: string; calories: number; protein: number; carbs: number; fat: number; serving: number } | null>(null);
 
   useEffect(() => {
     const a = localStorage.getItem('fitTracker_workouts');
@@ -975,7 +981,28 @@ export default function Home() {
 
             {/* Add Meal Form */}
             <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '24px' }}>
-              <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>Přidat jídlo</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', fontWeight: 500 }}>Přidat jídlo</div>
+                <button
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="touch-feedback"
+                  style={{
+                    background: 'var(--ios-blue)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '8px 16px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  📷 Naskenovat
+                </button>
+              </div>
               <input 
                 value={mName} 
                 onChange={e => setMName(e.target.value)} 
@@ -1333,6 +1360,54 @@ export default function Home() {
             setShowTemplateBuilder(false);
             setEditingTemplate(null);
           }}
+        />
+      )}
+
+      {/* Barcode Scanner */}
+      {showBarcodeScanner && (
+        <BarcodeScanner
+          onScan={(foodData) => {
+            setShowBarcodeScanner(false);
+            setScannedFoodData(foodData);
+          }}
+          onClose={() => setShowBarcodeScanner(false)}
+        />
+      )}
+
+      {/* Food Quantity Modal */}
+      {scannedFoodData && (
+        <FoodQuantityModal
+          foodData={scannedFoodData}
+          onConfirm={(finalData) => {
+            // Add meal with scanned data
+            const newMeal = { 
+              id: Date.now().toString(), 
+              date: new Date().toISOString(), 
+              name: finalData.name, 
+              calories: finalData.calories, 
+              protein: finalData.protein, 
+              carbs: finalData.carbs, 
+              fat: finalData.fat 
+            };
+            setMeals([newMeal, ...meals]);
+            
+            // Auto-save to savedMeals if not already exists
+            const exists = savedMeals.some(m => m.name.toLowerCase() === finalData.name.toLowerCase());
+            if (!exists) {
+              const savedMeal: SavedMeal = { 
+                id: (Date.now() + 1).toString(), 
+                name: finalData.name, 
+                calories: finalData.calories, 
+                protein: finalData.protein, 
+                carbs: finalData.carbs, 
+                fat: finalData.fat 
+              };
+              setSavedMeals([...savedMeals, savedMeal]);
+            }
+            
+            setScannedFoodData(null);
+          }}
+          onCancel={() => setScannedFoodData(null)}
         />
       )}
     </div>
