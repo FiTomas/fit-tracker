@@ -78,6 +78,8 @@ export default function Home() {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   });
+  const [completedWeeks, setCompletedWeeks] = useState<number[]>([]);
+  const [showMesoComplete, setShowMesoComplete] = useState(false);
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
   const [foodPeriod, setFoodPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [calorieGoal, setCalorieGoal] = useState<number>(2500);
@@ -125,7 +127,14 @@ export default function Home() {
     const allDone = dayExNames.length > 0 && dayExNames.every(de => doneToday.some(dt => dt.includes(de) || de.includes(dt)));
     
     if (allDone) {
-      setActiveDay((activeDay + 1) % 7);
+      const nextDay = (activeDay + 1) % 7;
+      setActiveDay(nextDay);
+      if (nextDay === 0 && !completedWeeks.includes(currentWeek)) {
+        setCompletedWeeks([...completedWeeks, currentWeek]);
+      }
+      if (completedWeeks.length >= 7 && currentWeek === 8) {
+        setShowMesoComplete(true);
+      }
     }
     
     setSelEx(null); 
