@@ -401,7 +401,10 @@ export default function MesocycleTemplateBuilder({ exercises, onSave, onCancel, 
                 {weeks.slice(0, numWeeks).map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setEditingWeek(i)}
+                    onClick={() => {
+                      setEditingWeek(i);
+                      setEditingDay(null); // Reset editing day when switching weeks
+                    }}
                     style={{
                       padding: '8px 16px',
                       background: i === editingWeek ? 'var(--ios-blue)' : 'var(--ios-bg-secondary)',
@@ -465,6 +468,46 @@ export default function MesocycleTemplateBuilder({ exercises, onSave, onCancel, 
                       <div style={{ fontSize: '13px', color: 'var(--ios-label-secondary)', marginBottom: '8px' }}>
                         Cvičení ({day.exerciseIds.length} vybráno)
                       </div>
+                      
+                      {/* Selected exercises preview */}
+                      {!editingDay && day.exerciseIds.length > 0 && (
+                        <div style={{
+                          background: 'var(--ios-bg)',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          marginBottom: '8px'
+                        }}>
+                          {day.exerciseIds.map((exId, idx) => {
+                            const exercise = exercises.find(e => e.id === exId);
+                            return exercise ? (
+                              <div key={exId} style={{
+                                fontSize: '14px',
+                                padding: '6px 0',
+                                borderBottom: idx < day.exerciseIds.length - 1 ? '1px solid var(--ios-separator)' : 'none',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span>{exercise.name}</span>
+                                <button
+                                  onClick={() => toggleExerciseForDay(editingWeek, dayIdx, exId)}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--ios-red)',
+                                    fontSize: '18px',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px'
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                      
                       {editingDay === dayIdx ? (
                         <div>
                           <div style={{ maxHeight: '200px', overflow: 'auto', marginBottom: '8px' }}>
@@ -522,7 +565,7 @@ export default function MesocycleTemplateBuilder({ exercises, onSave, onCancel, 
                             width: '100%'
                           }}
                         >
-                          {day.exerciseIds.length > 0 ? 'Upravit cvičení' : 'Vybrat cvičení'}
+                          {day.exerciseIds.length > 0 ? '+ Přidat další cvičení' : 'Vybrat cvičení'}
                         </button>
                       )}
                     </div>
@@ -530,6 +573,52 @@ export default function MesocycleTemplateBuilder({ exercises, onSave, onCancel, 
                 )}
               </div>
             ))}
+
+            {/* Copy Week 1 to All (only show for first week) */}
+            {editingWeek === 0 && numWeeks > 1 && (
+              <div style={{
+                marginTop: '24px',
+                padding: '16px',
+                background: 'var(--ios-bg-tertiary)',
+                borderRadius: '12px',
+                border: '2px dashed var(--ios-border)'
+              }}>
+                <div style={{ fontSize: '14px', color: 'var(--ios-label-secondary)', marginBottom: '12px', fontWeight: '500' }}>
+                  💡 Zkopírovat tento plán do všech týdnů?
+                </div>
+                <div style={{ fontSize: '13px', color: 'var(--ios-label-tertiary)', marginBottom: '12px' }}>
+                  Progressive overload se bude automaticky počítat podle RIR hodnot
+                </div>
+                <button
+                  onClick={() => {
+                    // Copy week 0 days to all other weeks
+                    const week0Days = weeks[0].days;
+                    const newWeeks = weeks.map((week, idx) => {
+                      if (idx === 0) return week; // Keep week 0 as is
+                      return {
+                        ...week,
+                        days: week0Days.map(day => ({ ...day })) // Deep copy
+                      };
+                    });
+                    setWeeks(newWeeks);
+                    alert(`Týden 1 zkopírován do všech ${numWeeks} týdnů!`);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'var(--ios-blue)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Zkopírovat do týdnů 2-{numWeeks}
+                </button>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button
