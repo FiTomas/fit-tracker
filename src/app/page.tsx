@@ -485,25 +485,38 @@ export default function Home() {
 
         {view === 'archive' && (
           <div>
-            <h3 style={{color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px'}}>ARCHIV</h3>
-            {wHist.length === 0 ? <div style={{color: '#666', textAlign: 'center', padding: '40px'}}>Zatím žádné tréninky</div> : 
-              wHist.slice(0, 20).map(w => {
-                const ex = exercisesList.find(e => e.id === w.exerciseId);
-                return ex ? <div key={w.id} style={{background: '#0a0a0a', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '12px'}}><span style={{color: '#22c55e'}}>{new Date(w.date).toLocaleDateString('cs-CZ', {day: 'numeric', month: 'short'})}</span> - {ex.name}</div> : null;
-              })
-            }
-          </div>
-        )}
-
-        {view === 'archive' && (
-          <div>
-            <h3 style={{color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px'}}>ARCHIV TRÉNINKŮ</h3>
-            {wHist.length === 0 ? <div style={{color: '#666', textAlign: 'center', padding: '40px'}}>Zatím žádné tréninky</div> : 
-              wHist.slice(0, 20).map(w => {
-                const ex = exercisesList.find(e => e.id === w.exerciseId);
-                return ex ? <div key={w.id} style={{background: '#0a0a0a', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '12px'}}><span style={{color: '#22c55e'}}>{new Date(w.date).toLocaleDateString('cs-CZ', {day: 'numeric', month: 'short'})}</span> - {ex.name}</div> : null;
-              })
-            }
+            <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Archiv tréninků</h3>
+            {wHist.length === 0 ? (
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '48px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏋️</div>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px' }}>Zatím žádné tréninky</div>
+              </div>
+            ) : (
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+                {wHist.slice(0, 30).map((w, idx) => {
+                  const ex = exercisesList.find(e => e.id === w.exerciseId);
+                  if (!ex) return null;
+                  const date = new Date(w.date);
+                  const totalSets = w.sets.length;
+                  const completedSets = w.sets.filter(s => s.completed).length;
+                  const maxWeight = Math.max(...w.sets.map(s => s.weight));
+                  return (
+                    <div key={w.id} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx < Math.min(29, wHist.length - 1) ? '0.5px solid var(--ios-separator)' : 'none' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px' }}>{ex.name}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--ios-label-secondary)' }}>
+                          {date.toLocaleDateString('cs-CZ', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ color: 'var(--ios-green)', fontWeight: 600, fontSize: '17px' }}>{maxWeight} kg</div>
+                        <div style={{ fontSize: '13px', color: 'var(--ios-label-tertiary)' }}>{completedSets}/{totalSets} setů</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -560,72 +573,115 @@ export default function Home() {
               ))}
             </div>
 
+            {/* Calorie Graph */}
             {calorieData.data.length >= 2 ? (
-              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                <div style={{ height: '150px', position: 'relative', marginBottom: '12px' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '16px' }}>
+                <div style={{ height: '180px', position: 'relative', marginBottom: '16px' }}>
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '44px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ios-label-tertiary)', fontWeight: 500 }}>
                     <span>{Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200}</span>
-                    <span style={{ color: '#22c55e' }}>{calorieGoal}</span>
+                    <span style={{ color: 'var(--ios-green)' }}>{calorieGoal}</span>
                     <span>0</span>
                   </div>
-                  <div style={{ marginLeft: '45px', height: '100%', position: 'relative', borderBottom: '1px solid #222' }}>
-                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (calorieGoal / (Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200)) * 100}%`, height: '1px', background: '#22c55e', opacity: 0.3 }} />
+                  <div style={{ marginLeft: '48px', height: '100%', position: 'relative', borderBottom: '1px solid var(--ios-separator)' }}>
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (calorieGoal / (Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200)) * 100}%`, height: '1px', background: 'var(--ios-green)', opacity: 0.3 }} />
                     {calorieData.data.map((d, i) => {
                       const maxCal = Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200;
                       const left = (i / (calorieData.data.length - 1)) * 100;
                       const top = ((maxCal - d.calories) / maxCal) * 100;
                       return (
-                        <div key={i} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '8px', height: '8px', background: d.calories >= calorieGoal ? '#22c55e' : '#eab308', borderRadius: '50%', transform: 'translate(-50%, 50%)' }} title={d.calories + ' kcal - ' + fmtD(d.date)} />
+                        <div key={i} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '10px', height: '10px', background: d.calories >= calorieGoal ? 'var(--ios-green)' : 'var(--ios-orange)', borderRadius: '50%', transform: 'translate(-50%, 50%)', border: '2px solid var(--ios-bg-secondary)' }} title={d.calories + ' kcal - ' + fmtD(d.date)} />
                       );
                     })}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
-                  <span>{calorieData.data[0] ? fmtD(calorieData.data[0].date) : '-'}</span>
-                  <span style={{ color: '#666' }}>Průměr: {calorieData.avg.toFixed(0)} kcal</span>
-                  <span>{calorieData.data[calorieData.data.length - 1] ? fmtD(calorieData.data[calorieData.data.length - 1].date) : '-'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ios-label-secondary)' }}>
+                  <span>{calorieData.data[0] ? fmtD(calorieData.data[0].date) : '–'}</span>
+                  <span style={{ fontWeight: 600 }}>Ø {calorieData.avg.toFixed(0)} kcal</span>
+                  <span>{calorieData.data[calorieData.data.length - 1] ? fmtD(calorieData.data[calorieData.data.length - 1].date) : '–'}</span>
                 </div>
               </div>
             ) : (
-              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '40px', textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                Potřebuješ alespoň 2 dny s jídly pro graf
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '48px 24px', textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📊</div>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px' }}>Potřebuješ alespoň 2 dny s jídly pro graf</div>
               </div>
             )}
 
+            {/* Saved Meals */}
             {savedMeals.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>ULOŽENÁ JÍDLA</h3>
-                {savedMeals.map(m => (
-                  <div key={m.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div onClick={() => usePresetMeal(m)} style={{ flex: 1, cursor: 'pointer' }}>
-                      <div style={{ fontWeight: 500, marginBottom: '4px' }}>{m.name}</div>
-                      <div style={{ fontSize: '11px', color: '#666' }}>
-                        <span style={{ color: '#22c55e' }}>{m.calories} kcal</span> • <span style={{ color: '#ef4444' }}>{m.protein}g B</span> • <span style={{ color: '#3b82f6' }}>{m.carbs}g S</span> • <span style={{ color: '#eab308' }}>{m.fat}g T</span>
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Uložená jídla</h3>
+                <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+                  {savedMeals.map((m, idx) => (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: idx < savedMeals.length - 1 ? '0.5px solid var(--ios-separator)' : 'none' }}>
+                      <div onClick={() => usePresetMeal(m)} className="touch-feedback" style={{ flex: 1, cursor: 'pointer' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '6px', fontSize: '17px' }}>{m.name}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--ios-label-secondary)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ color: 'var(--ios-green)' }}>{m.calories} kcal</span>
+                          <span>•</span>
+                          <span style={{ color: 'var(--ios-red)' }}>{m.protein}g B</span>
+                          <span>•</span>
+                          <span style={{ color: 'var(--ios-blue)' }}>{m.carbs}g S</span>
+                          <span>•</span>
+                          <span style={{ color: 'var(--ios-orange)' }}>{m.fat}g T</span>
+                        </div>
                       </div>
+                      <button onClick={() => delSavedMeal(m.id)} className="touch-feedback" style={{ background: 'none', border: 'none', color: 'var(--ios-label-tertiary)', cursor: 'pointer', fontSize: '24px', marginLeft: '12px', padding: '8px' }}>×</button>
                     </div>
-                    <button onClick={() => delSavedMeal(m.id)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: '18px', marginLeft: '8px' }}>×</button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-              <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PŘIDAT JÍDLO</div>
-              <input value={mName} onChange={e => setMName(e.target.value)} placeholder="Název jídla" style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '14px', marginBottom: '12px' }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                <input value={mCals} onChange={e => setMCals(e.target.value)} placeholder="kcal" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#22c55e', fontSize: '14px', textAlign: 'center' }} />
-                <input value={mPro} onChange={e => setMPro(e.target.value)} placeholder="B" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#ef4444', fontSize: '14px', textAlign: 'center' }} />
-                <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#3b82f6', fontSize: '14px', textAlign: 'center' }} />
-                <input value={mFat} onChange={e => setMFat(e.target.value)} placeholder="T" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#eab308', fontSize: '14px', textAlign: 'center' }} />
+            {/* Add Meal Form */}
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '24px' }}>
+              <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>Přidat jídlo</div>
+              <input 
+                value={mName} 
+                onChange={e => setMName(e.target.value)} 
+                placeholder="Název jídla" 
+                style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '12px', outline: 'none' }} 
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+                <input value={mCals} onChange={e => setMCals(e.target.value)} placeholder="kcal" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-green)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
+                <input value={mPro} onChange={e => setMPro(e.target.value)} placeholder="B" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-red)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
+                <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-blue)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
+                <input value={mFat} onChange={e => setMFat(e.target.value)} placeholder="T" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-orange)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={addMeal} style={{ flex: 1, background: '#22c55e', border: 'none', borderRadius: '8px', padding: '12px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>Přidat</button>
-                <button onClick={savePresetMeal} style={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#666', fontWeight: 600, cursor: 'pointer' }}>💾</button>
+                <button onClick={addMeal} className="touch-feedback" style={{ flex: 1, background: 'var(--ios-green)', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: '17px', minHeight: '50px', transition: 'all 0.2s ease' }}>Přidat</button>
+                <button onClick={savePresetMeal} className="touch-feedback" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px 20px', color: 'var(--ios-label)', fontWeight: 600, cursor: 'pointer', fontSize: '20px', minHeight: '50px', transition: 'all 0.2s ease' }}>💾</button>
               </div>
             </div>
 
-            <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>DNES</h3>
-            {tdMls.map(m => <div key={m.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div><div style={{ fontWeight: 500, marginBottom: '4px' }}>{m.name}</div><div style={{ fontSize: '11px', color: '#666' }}><span style={{ color: '#22c55e' }}>{m.calories} kcal</span> • <span style={{ color: '#ef4444' }}>{m.protein}g B</span> • <span style={{ color: '#3b82f6' }}>{m.carbs}g S</span> • <span style={{ color: '#eab308' }}>{m.fat}g T</span></div></div><button onClick={() => delMeal(m.id)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: '18px' }}>×</button></div>)}
+            {/* Today's Meals */}
+            <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Dnes</h3>
+            {tdMls.length > 0 ? (
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+                {tdMls.map((m, idx) => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: idx < tdMls.length - 1 ? '0.5px solid var(--ios-separator)' : 'none' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, marginBottom: '6px', fontSize: '17px' }}>{m.name}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--ios-label-secondary)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ color: 'var(--ios-green)' }}>{m.calories} kcal</span>
+                        <span>•</span>
+                        <span style={{ color: 'var(--ios-red)' }}>{m.protein}g B</span>
+                        <span>•</span>
+                        <span style={{ color: 'var(--ios-blue)' }}>{m.carbs}g S</span>
+                        <span>•</span>
+                        <span style={{ color: 'var(--ios-orange)' }}>{m.fat}g T</span>
+                      </div>
+                    </div>
+                    <button onClick={() => delMeal(m.id)} className="touch-feedback" style={{ background: 'none', border: 'none', color: 'var(--ios-label-tertiary)', cursor: 'pointer', fontSize: '24px', marginLeft: '12px', padding: '8px' }}>×</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', padding: '48px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍽️</div>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px' }}>Zatím žádná jídla</div>
+              </div>
+            )}
           </div>
         )}
 
