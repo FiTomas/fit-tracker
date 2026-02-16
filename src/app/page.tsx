@@ -252,7 +252,7 @@ export default function Home() {
 
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ color: '#22c55e', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {currentWeek} - {MESOCYCLE[currentWeek - 1].type}</h3>
-              {(WEEK_EXERCISES[currentWeek] || []).map((exName, i) => {
+              {(dayExercises || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
                 const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === exName.toLowerCase());
                 return (
