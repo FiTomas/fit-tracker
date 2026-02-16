@@ -360,7 +360,27 @@ export default function Home() {
   };
   const addWght = () => { if (!newWght || parseFloat(newWght) <= 0) return; setWght([{ id: Date.now().toString(), date: new Date().toISOString(), weight: parseFloat(newWght) }, ...wght]); setNewWght(''); };
   const [newWght, setNewWght] = useState('');
-  const addMeal = () => { if (!mName.trim() || !mCals) return; setMeals([{ id: Date.now().toString(), date: new Date().toISOString(), name: mName, calories: parseInt(mCals) || 0, protein: parseInt(mPro) || 0, carbs: parseInt(mCarb) || 0, fat: parseInt(mFat) || 0 }, ...meals]); setMName(''); setMCals(''); setMPro(''); setMCarb(''); setMFat(''); };
+  const addMeal = () => { 
+    if (!mName.trim() || !mCals) return; 
+    const newMeal = { id: Date.now().toString(), date: new Date().toISOString(), name: mName, calories: parseInt(mCals) || 0, protein: parseInt(mPro) || 0, carbs: parseInt(mCarb) || 0, fat: parseInt(mFat) || 0 };
+    setMeals([newMeal, ...meals]); 
+    
+    // Auto-save to savedMeals if not already exists
+    const exists = savedMeals.some(m => m.name.toLowerCase() === mName.trim().toLowerCase());
+    if (!exists) {
+      const savedMeal: SavedMeal = { 
+        id: (Date.now() + 1).toString(), 
+        name: mName, 
+        calories: parseInt(mCals) || 0, 
+        protein: parseInt(mPro) || 0, 
+        carbs: parseInt(mCarb) || 0, 
+        fat: parseInt(mFat) || 0 
+      };
+      setSavedMeals([...savedMeals, savedMeal]);
+    }
+    
+    setMName(''); setMCals(''); setMPro(''); setMCarb(''); setMFat(''); 
+  };
   const [mName, setMName] = useState('');
   const [mCals, setMCals] = useState('');
   const [mPro, setMPro] = useState('');
@@ -962,16 +982,113 @@ export default function Home() {
                 placeholder="Název jídla" 
                 style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '12px', outline: 'none' }} 
               />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-                <input value={mCals} onChange={e => setMCals(e.target.value)} placeholder="kcal" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-green)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
-                <input value={mPro} onChange={e => setMPro(e.target.value)} placeholder="B" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-red)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
-                <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-blue)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
-                <input value={mFat} onChange={e => setMFat(e.target.value)} placeholder="T" inputMode="numeric" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 8px', color: 'var(--ios-orange)', fontSize: '17px', textAlign: 'center', fontWeight: 600, outline: 'none' }} />
+              
+              {/* Macros Grid with Labels */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                {/* Kalorie */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ios-label-tertiary)', marginBottom: '6px', fontWeight: 500 }}>
+                    Kalorie
+                  </label>
+                  <input 
+                    value={mCals} 
+                    onChange={e => setMCals(e.target.value)} 
+                    placeholder="0" 
+                    inputMode="numeric" 
+                    style={{ 
+                      width: '100%',
+                      background: 'var(--ios-bg-tertiary)', 
+                      border: 'none', 
+                      borderRadius: '10px', 
+                      padding: '14px 12px', 
+                      color: 'var(--ios-green)', 
+                      fontSize: '17px', 
+                      textAlign: 'center', 
+                      fontWeight: 600, 
+                      outline: 'none' 
+                    }} 
+                  />
+                </div>
+                
+                {/* Bílkoviny */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ios-label-tertiary)', marginBottom: '6px', fontWeight: 500 }}>
+                    B
+                  </label>
+                  <input 
+                    value={mPro} 
+                    onChange={e => setMPro(e.target.value)} 
+                    placeholder="0" 
+                    inputMode="numeric" 
+                    style={{ 
+                      width: '100%',
+                      background: 'var(--ios-bg-tertiary)', 
+                      border: 'none', 
+                      borderRadius: '10px', 
+                      padding: '14px 8px', 
+                      color: 'var(--ios-red)', 
+                      fontSize: '17px', 
+                      textAlign: 'center', 
+                      fontWeight: 600, 
+                      outline: 'none' 
+                    }} 
+                  />
+                </div>
+                
+                {/* Sacharidy */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ios-label-tertiary)', marginBottom: '6px', fontWeight: 500 }}>
+                    S
+                  </label>
+                  <input 
+                    value={mCarb} 
+                    onChange={e => setMCarb(e.target.value)} 
+                    placeholder="0" 
+                    inputMode="numeric" 
+                    style={{ 
+                      width: '100%',
+                      background: 'var(--ios-bg-tertiary)', 
+                      border: 'none', 
+                      borderRadius: '10px', 
+                      padding: '14px 8px', 
+                      color: 'var(--ios-blue)', 
+                      fontSize: '17px', 
+                      textAlign: 'center', 
+                      fontWeight: 600, 
+                      outline: 'none' 
+                    }} 
+                  />
+                </div>
+                
+                {/* Tuky */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--ios-label-tertiary)', marginBottom: '6px', fontWeight: 500 }}>
+                    T
+                  </label>
+                  <input 
+                    value={mFat} 
+                    onChange={e => setMFat(e.target.value)} 
+                    placeholder="0" 
+                    inputMode="numeric" 
+                    style={{ 
+                      width: '100%',
+                      background: 'var(--ios-bg-tertiary)', 
+                      border: 'none', 
+                      borderRadius: '10px', 
+                      padding: '14px 8px', 
+                      color: 'var(--ios-orange)', 
+                      fontSize: '17px', 
+                      textAlign: 'center', 
+                      fontWeight: 600, 
+                      outline: 'none' 
+                    }} 
+                  />
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={addMeal} className="touch-feedback" style={{ flex: 1, background: 'var(--ios-green)', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: '17px', minHeight: '50px', transition: 'all 0.2s ease' }}>Přidat</button>
-                <button onClick={savePresetMeal} className="touch-feedback" style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px 20px', color: 'var(--ios-label)', fontWeight: 600, cursor: 'pointer', fontSize: '20px', minHeight: '50px', transition: 'all 0.2s ease' }}>💾</button>
-              </div>
+              
+              <button onClick={addMeal} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-green)', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: '17px', minHeight: '50px', transition: 'all 0.2s ease' }}>
+                Přidat a uložit
+              </button>
             </div>
 
             {/* Today's Meals */}
