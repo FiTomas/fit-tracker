@@ -17,6 +17,22 @@
   --ios-yellow: #ffd60a;
 }
 
+/* Light Mode */
+:root[data-theme="light"] {
+  --ios-bg: #f2f2f7;
+  --ios-bg-secondary: #ffffff;
+  --ios-bg-tertiary: #f2f2f7;
+  --ios-label: #000000;
+  --ios-label-secondary: #3c3c43;
+  --ios-label-tertiary: #3c3c4399;
+  --ios-separator: #c6c6c8;
+  --ios-green: #34c759;
+  --ios-blue: #007aff;
+  --ios-red: #ff3b30;
+  --ios-orange: #ff9500;
+  --ios-yellow: #ffcc00;
+}
+
 * {
   margin: 0;
   padding: 0;

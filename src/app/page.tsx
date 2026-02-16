@@ -3,12 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 
 interface Exercise { id: string; name: string; category: string; }
-interface WorkoutSet { reps: number; weight: number; rir: number; completed: boolean; }
-interface WorkoutLog { id: string; date: string; exerciseId: string; sets: WorkoutSet[]; }
+interface WorkoutSet { reps: number; weight: number; rir: number; completed: boolean; note?: string; }
+interface WorkoutLog { id: string; date: string; exerciseId: string; sets: WorkoutSet[]; note?: string; }
 interface WeightEntry { id: string; date: string; weight: number; }
 interface MealEntry { id: string; date: string; name: string; calories: number; protein: number; carbs: number; fat: number; }
 interface Mesocycle { week: number; type: 'BASE' | 'BUILD' | 'PEAK' | 'DELOAD'; description: string; }
 interface SavedMeal { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; }
+interface WorkoutTemplate { id: string; name: string; exerciseIds: string[]; }
 
 const MESOCYCLE: Mesocycle[] = [
   { week: 1, type: 'BASE', description: '4x10 @ 70% 1RM' },
@@ -112,6 +113,9 @@ export default function Home() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [restTimerActive, setRestTimerActive] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
+  const [currentNote, setCurrentNote] = useState('');
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -133,9 +137,19 @@ export default function Home() {
     const e = localStorage.getItem('fitTracker_savedMeals');
     const f = localStorage.getItem('fitTracker_calorieGoal');
     const g = localStorage.getItem('fitTracker_weightGoal');
+    const i = localStorage.getItem('fitTracker_darkMode');
     if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) setExercisesList(JSON.parse(d)); if (e) setSavedMeals(JSON.parse(e)); if (f) setCalorieGoal(parseInt(f)); if (g) setWeightGoal(parseFloat(g));
     const h = localStorage.getItem("fitTracker_completedWeeks"); if (h) setCompletedWeeks(JSON.parse(h));
+    if (i !== null) setDarkMode(i === 'true');
   }, []);
+
+  // Apply dark/light mode
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+      localStorage.setItem('fitTracker_darkMode', darkMode.toString());
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     localStorage.setItem('fitTracker_workouts', JSON.stringify(wHist));
@@ -331,8 +345,49 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--ios-bg)', paddingTop: 'max(env(safe-area-inset-top), 16px)', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', paddingLeft: '16px', paddingRight: '16px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.01em', marginBottom: '2px' }}>Fit Tracker</h1>
-        <p style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px', marginBottom: '24px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        {/* Header with Dark Mode Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+          <h1 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '0.01em' }}>Fit Tracker</h1>
+          <button 
+            onClick={() => setDarkMode(!darkMode)} 
+            className="touch-feedback"
+            style={{ background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '12px', padding: '10px 14px', cursor: 'pointer', fontSize: '20px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
+        <p style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px', marginBottom: '16px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+
+        {/* Weekly Summary Widget */}
+        {view === 'workout' && (() => {
+          const today = new Date();
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
+          
+          const thisWeekWorkouts = wHist.filter(w => {
+            const workoutDate = new Date(w.date);
+            return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+          });
+          
+          const uniqueDays = new Set(thisWeekWorkouts.map(w => new Date(w.date).toDateString())).size;
+          const targetDays = 5; // 5 workouts per week
+          
+          return (
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '16px', padding: '16px 20px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '13px', color: 'var(--ios-label-tertiary)', marginBottom: '4px', fontWeight: 500 }}>Tento týden</div>
+                <div style={{ fontSize: '24px', fontWeight: 700 }}>
+                  <span style={{ color: uniqueDays >= targetDays ? 'var(--ios-green)' : 'var(--ios-label)' }}>{uniqueDays}</span>
+                  <span style={{ color: 'var(--ios-label-tertiary)', fontSize: '17px' }}>/{targetDays}</span>
+                  <span style={{ fontSize: '17px', marginLeft: '8px' }}>tréninků</span>
+                </div>
+              </div>
+              <div style={{ fontSize: '40px' }}>{uniqueDays >= targetDays ? '🔥' : '💪'}</div>
+            </div>
+          );
+        })()}
 
         <div className="ios-glass" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '0.5px solid var(--ios-separator)', paddingTop: '8px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)', paddingLeft: '8px', paddingRight: '8px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
           {
