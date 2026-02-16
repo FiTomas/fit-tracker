@@ -8,6 +8,7 @@ interface WorkoutLog { id: string; date: string; exerciseId: string; sets: Worko
 interface WeightEntry { id: string; date: string; weight: number; }
 interface MealEntry { id: string; date: string; name: string; calories: number; protein: number; carbs: number; fat: number; }
 interface Mesocycle { week: number; type: 'BASE' | 'BUILD' | 'PEAK' | 'DELOAD'; description: string; }
+interface SavedMeal { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; }
 
 const MESOCYCLE: Mesocycle[] = [
   { week: 1, type: 'BASE', description: '4x10 @ 70% 1RM' },
@@ -70,6 +71,7 @@ export default function Home() {
   const [wHist, setWHist] = useState<WorkoutLog[]>([]);
   const [wght, setWght] = useState<WeightEntry[]>([]);
   const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [view, setView] = useState<'workout' | 'weight' | 'food'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -77,13 +79,19 @@ export default function Home() {
     return d === 0 ? 6 : d - 1;
   });
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
+  const [foodPeriod, setFoodPeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [calorieGoal, setCalorieGoal] = useState<number>(2500);
+  const [weightGoal, setWeightGoal] = useState<number>(85);
 
   useEffect(() => {
     const a = localStorage.getItem('fitTracker_workouts');
     const b = localStorage.getItem('fitTracker_weight');
     const c = localStorage.getItem('fitTracker_meals');
     const d = localStorage.getItem('fitTracker_exercises');
-    if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) exercisesList = JSON.parse(d);
+    const e = localStorage.getItem('fitTracker_savedMeals');
+    const f = localStorage.getItem('fitTracker_calorieGoal');
+    const g = localStorage.getItem('fitTracker_weightGoal');
+    if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) exercisesList = JSON.parse(d); if (e) setSavedMeals(JSON.parse(e)); if (f) setCalorieGoal(parseInt(f)); if (g) setWeightGoal(parseFloat(g));
   }, []);
 
   useEffect(() => {
@@ -91,7 +99,10 @@ export default function Home() {
     localStorage.setItem('fitTracker_weight', JSON.stringify(wght));
     localStorage.setItem('fitTracker_meals', JSON.stringify(meals));
     localStorage.setItem('fitTracker_exercises', JSON.stringify(exercisesList));
-  }, [wHist, wght, meals]);
+    localStorage.setItem('fitTracker_savedMeals', JSON.stringify(savedMeals));
+    localStorage.setItem('fitTracker_calorieGoal', calorieGoal.toString());
+    localStorage.setItem('fitTracker_weightGoal', weightGoal.toString());
+  }, [wHist, wght, meals, savedMeals, calorieGoal, weightGoal]);
 
   const getLast = (id: string) => wHist.filter(w => w.exerciseId === id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const startW = (ex: Exercise) => { const t = getLast(ex.id) ? calcTargets(getLast(ex.id).sets) : { weight: 50, reps: 8 }; setSelEx(ex); setCurSets([{ reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }]); };
@@ -129,6 +140,19 @@ export default function Home() {
   const [mCarb, setMCarb] = useState('');
   const [mFat, setMFat] = useState('');
   const delMeal = (id: string) => setMeals(meals.filter(m => m.id !== id));
+  
+  const savePresetMeal = () => {
+    if (!mName.trim() || !mCals) return;
+    const newSaved: SavedMeal = { id: Date.now().toString(), name: mName, calories: parseInt(mCals) || 0, protein: parseInt(mPro) || 0, carbs: parseInt(mCarb) || 0, fat: parseInt(mFat) || 0 };
+    setSavedMeals([...savedMeals, newSaved]);
+  };
+  
+  const usePresetMeal = (meal: SavedMeal) => {
+    setMeals([{ id: Date.now().toString(), date: new Date().toISOString(), name: meal.name, calories: meal.calories, protein: meal.protein, carbs: meal.carbs, fat: meal.fat }, ...meals]);
+  };
+  
+  const delSavedMeal = (id: string) => setSavedMeals(savedMeals.filter(m => m.id !== id));
+  
   const fmt = (d: string) => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const fmtD = (d: string) => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
   const tdMls = meals.filter(e => new Date(e.date).toDateString() === new Date().toDateString());
@@ -136,8 +160,6 @@ export default function Home() {
   const lastWg = wght[0]?.weight || 0;
   const meso = getMesocycleWeek();
   const currentWeek = selWeek || meso.week;
-  const todayDay = new Date().getDay();
-  const currentDay = todayDay === 0 ? 6 : todayDay - 1;
 
   const getDayExercises = (day: number) => {
     const weekEx = WEEK_EXERCISES[currentWeek] || [];
@@ -146,6 +168,18 @@ export default function Home() {
     return [];
   };
   const dayExercises = getDayExercises(activeDay);
+
+  const getTodayCompletedExercises = () => {
+    const today = new Date().toDateString();
+    return wHist
+      .filter(w => new Date(w.date).toDateString() === today)
+      .map(w => {
+        const ex = exercisesList.find(ex => ex.id === w.exerciseId);
+        return ex ? { id: w.id, name: ex.name, sets: w.sets } : null;
+      })
+      .filter(Boolean);
+  };
+  const todayCompleted = getTodayCompletedExercises();
 
   const weightData = useMemo(() => {
     if (wght.length < 2) return { data: [], trend: 0, avg: 0 };
@@ -163,22 +197,40 @@ export default function Home() {
     return { data: filtered, trend, avg };
   }, [wght, weightPeriod, lastWg]);
 
+  const calorieData = useMemo(() => {
+    const now = new Date();
+    let cutoff = new Date();
+    if (foodPeriod === 'week') cutoff.setDate(now.getDate() - 7);
+    else if (foodPeriod === 'month') cutoff.setDate(now.getDate() - 30);
+    else cutoff.setDate(now.getDate() - 365);
+    
+    const dailyTotals: Record<string, { calories: number; protein: number; carbs: number; fat: number }> = {};
+    meals.forEach(m => {
+      const dateKey = new Date(m.date).toDateString();
+      if (new Date(m.date) >= cutoff) {
+        if (!dailyTotals[dateKey]) {
+          dailyTotals[dateKey] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        }
+        dailyTotals[dateKey].calories += m.calories;
+        dailyTotals[dateKey].protein += m.protein;
+        dailyTotals[dateKey].carbs += m.carbs;
+        dailyTotals[dateKey].fat += m.fat;
+      }
+    });
+    
+    const data = Object.entries(dailyTotals)
+      .map(([date, totals]) => ({ date, ...totals }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    const avg = data.length > 0 ? data.reduce((s, d) => s + d.calories, 0) / data.length : 0;
+    return { data, avg };
+  }, [meals, foodPeriod]);
+
   return (
     <div style={{ minHeight: '100vh', background: '#000', padding: '16px', fontFamily: '-apple-system', color: '#fff', paddingBottom: '80px' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '28px', fontWeight: 700 }}>FIT TRACKER</h1>
         <p style={{ color: '#666', margin: '4px 0 20px' }}>{new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-          <button onClick={() => setView('weight')} style={{ background: view === 'weight' ? '#1a1a1a' : '#0a0a0a', border: view === 'weight' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
-            <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>HMOTNOST</div>
-            <div style={{ fontSize: '22px', fontWeight: 600 }}>{lastWg > 0 ? lastWg + ' kg' : '--'}</div>
-          </button>
-          <button onClick={() => setView('food')} style={{ background: view === 'food' ? '#1a1a1a' : '#0a0a0a', border: view === 'food' ? '1px solid #333' : '1px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textAlign: 'left' }}>
-            <div style={{ color: '#666', fontSize: '10px', textTransform: 'uppercase' }}>DNES</div>
-            <div style={{ fontSize: '22px', fontWeight: 600, color: tdTot.calories > 0 ? '#22c55e' : '#fff' }}>{tdTot.calories > 0 ? tdTot.calories + ' kcal' : '--'}</div>
-          </button>
-        </div>
 
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0a0a0a', borderTop: '1px solid #1a1a1a', padding: '12px 16px', display: 'flex', justifyContent: 'space-around', zIndex: 100 }}>
           {[{ k: 'workout', l: 'TRÉNINK', i: '🏋️' }, { k: 'weight', l: 'HMOTNOST', i: '⚖️' }, { k: 'food', l: 'KALORIE', i: '🍎' }].map(t => (
@@ -202,20 +254,33 @@ export default function Home() {
               <h3 style={{ color: '#22c55e', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>🔥 TÝDEN {currentWeek} - {MESOCYCLE[currentWeek - 1].type}</h3>
               {(WEEK_EXERCISES[currentWeek] || []).map((exName, i) => {
                 const ex = exercisesList.find(e => e.name === exName) || exercisesList.find(e => e.name.toLowerCase().includes(exName.toLowerCase()));
+                const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === exName.toLowerCase());
                 return (
                   <div key={i} style={{ marginBottom: '8px' }}>
-                    <button onClick={() => ex && startW(ex)} style={{ width: '100%', background: '#0a0a0a', border: '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: '#fff', fontSize: '14px' }}>
-                      <span style={{ fontWeight: 500 }}>{exName}</span>
-                      <span style={{ color: '#666', fontSize: '12px' }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '-' : '?'} kg</span>
+                    <button onClick={() => ex && startW(ex)} style={{ width: '100%', background: isCompleted ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', border: isCompleted ? '1px solid #22c55e' : '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: ex ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: ex ? 1 : 0.5, color: '#fff', fontSize: '14px' }}>
+                      <span style={{ fontWeight: 500 }}>{exName} {isCompleted && '✓'}</span>
+                      <span style={{ color: isCompleted ? '#22c55e' : '#666', fontSize: '12px' }}>{ex ? getLast(ex.id)?.sets[0]?.weight || '-' : '?'} kg</span>
                     </button>
                   </div>
                 );
               })}
             </div>
 
+            {todayCompleted.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>✅ DNES HOTOVO</h4>
+                {todayCompleted.map((c, i) => c && (
+                  <div key={c.id || i} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: '1px solid #22c55e' }}>
+                    <span style={{ fontWeight: 500 }}>{c.name}</span>
+                    <span style={{ color: '#666', fontSize: '12px' }}>{c.sets.length}× {c.sets[0]?.weight}kg</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
             {MESO_DAYS.map((d, idx) => (
-              <div key={d.day} style={{ background: idx === activeDay ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: idx === activeDay ? '1px solid #22c55e' : '1px solid transparent' }}>
+              <div key={d.day} onClick={() => setActiveDay(idx)} style={{ background: idx === activeDay ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: idx === activeDay ? '1px solid #22c55e' : '1px solid transparent', cursor: 'pointer' }}>
                 <span style={{ color: idx === activeDay ? '#22c55e' : '#888', fontSize: '13px', fontWeight: idx === activeDay ? 600 : 400 }}>{d.day}</span>
                 <span style={{ color: d.workout.includes('DELOAD') ? '#eab308' : idx === activeDay ? '#22c55e' : '#fff', fontSize: '13px' }}>{d.workout}</span>
               </div>
@@ -233,6 +298,32 @@ export default function Home() {
                   {weightData.trend > 0 ? '↑ +' : '↓ '}{weightData.trend.toFixed(1)} kg za {weightPeriod === 'week' ? 'týden' : weightPeriod === 'month' ? 'měsíc' : 'rok'}
                 </div>
               )}
+            </div>
+
+            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>CÍL HMOTNOSTI</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input 
+                    type="number" 
+                    value={weightGoal} 
+                    onChange={e => setWeightGoal(parseFloat(e.target.value) || 85)} 
+                    style={{ background: '#000', border: '1px solid #333', borderRadius: '4px', padding: '4px 8px', color: '#22c55e', fontSize: '14px', width: '60px', textAlign: 'center' }} 
+                  />
+                  <span style={{ color: '#666', fontSize: '12px' }}>kg</span>
+                </div>
+              </div>
+              <div style={{ background: '#1a1a1a', borderRadius: '8px', height: '12px', overflow: 'hidden' }}>
+                <div style={{ 
+                  width: lastWg > 0 ? `${Math.min(100, Math.max(0, (lastWg / weightGoal) * 100))}%` : '0%', 
+                  height: '100%', 
+                  background: lastWg >= weightGoal ? '#22c55e' : '#eab308',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                {lastWg > 0 ? (lastWg >= weightGoal ? '✓ Cíl dosažen!' : `${(weightGoal - lastWg).toFixed(1)} kg do cíle`) : 'Zadejte hmotnost'}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -285,14 +376,93 @@ export default function Home() {
         {view === 'food' && (
           <div>
             <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '16px' }}>DNESNI PŘÍJEM</div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: tdTot.calories > 0 ? '#22c55e' : '#fff' }}>{tdTot.calories}<span style={{ fontSize: '16px', color: '#666', marginLeft: '4px' }}>kcal</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>DENNÍ CÍL KALORII</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input 
+                    type="number" 
+                    value={calorieGoal} 
+                    onChange={e => setCalorieGoal(parseInt(e.target.value) || 2500)} 
+                    style={{ background: '#000', border: '1px solid #333', borderRadius: '4px', padding: '4px 8px', color: '#22c55e', fontSize: '14px', width: '70px', textAlign: 'center' }} 
+                  />
+                  <span style={{ color: '#666', fontSize: '12px' }}>kcal</span>
+                </div>
+              </div>
+              <div style={{ background: '#1a1a1a', borderRadius: '8px', height: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+                <div style={{ 
+                  width: `${Math.min(100, Math.max(0, (tdTot.calories / calorieGoal) * 100))}%`, 
+                  height: '100%', 
+                  background: tdTot.calories >= calorieGoal ? '#22c55e' : '#eab308',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+              <div style={{ fontSize: '36px', fontWeight: 700, color: tdTot.calories > 0 ? '#22c55e' : '#fff', marginBottom: '8px' }}>
+                {tdTot.calories}<span style={{ fontSize: '16px', color: '#666', marginLeft: '4px' }}>/ {calorieGoal} kcal</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Bílkoviny</div><div style={{ color: '#ef4444', fontWeight: 600 }}>{tdTot.protein}g</div></div>
                 <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Sacharidy</div><div style={{ color: '#3b82f6', fontWeight: 600 }}>{tdTot.carbs}g</div></div>
                 <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Tuky</div><div style={{ color: '#eab308', fontWeight: 600 }}>{tdTot.fat}g</div></div>
               </div>
             </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              {(['week', 'month', 'year'] as const).map(p => (
+                <button key={p} onClick={() => setFoodPeriod(p)} style={{ flex: 1, background: foodPeriod === p ? '#22c55e' : '#0a0a0a', border: foodPeriod === p ? 'none' : '1px solid #333', borderRadius: '8px', padding: '10px', color: foodPeriod === p ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', textTransform: 'uppercase' }}>
+                  {p === 'week' ? '7 dní' : p === 'month' ? '30 dní' : 'Rok'}
+                </button>
+              ))}
+            </div>
+
+            {calorieData.data.length >= 2 ? (
+              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+                <div style={{ height: '150px', position: 'relative', marginBottom: '12px' }}>
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
+                    <span>{Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200}</span>
+                    <span style={{ color: '#22c55e' }}>{calorieGoal}</span>
+                    <span>0</span>
+                  </div>
+                  <div style={{ marginLeft: '45px', height: '100%', position: 'relative', borderBottom: '1px solid #222' }}>
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (calorieGoal / (Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200)) * 100}%`, height: '1px', background: '#22c55e', opacity: 0.3 }} />
+                    {calorieData.data.map((d, i) => {
+                      const maxCal = Math.max(...calorieData.data.map(d => d.calories), calorieGoal) + 200;
+                      const left = (i / (calorieData.data.length - 1)) * 100;
+                      const top = ((maxCal - d.calories) / maxCal) * 100;
+                      return (
+                        <div key={i} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '8px', height: '8px', background: d.calories >= calorieGoal ? '#22c55e' : '#eab308', borderRadius: '50%', transform: 'translate(-50%, 50%)' }} title={d.calories + ' kcal - ' + fmtD(d.date)} />
+                      );
+                    })}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
+                  <span>{calorieData.data[0] ? fmtD(calorieData.data[0].date) : '-'}</span>
+                  <span style={{ color: '#666' }}>Průměr: {calorieData.avg.toFixed(0)} kcal</span>
+                  <span>{calorieData.data[calorieData.data.length - 1] ? fmtD(calorieData.data[calorieData.data.length - 1].date) : '-'}</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '40px', textAlign: 'center', marginBottom: '20px', color: '#666' }}>
+                Potřebuješ alespoň 2 dny s jídly pro graf
+              </div>
+            )}
+
+            {savedMeals.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>ULOŽENÁ JÍDLA</h3>
+                {savedMeals.map(m => (
+                  <div key={m.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div onClick={() => usePresetMeal(m)} style={{ flex: 1, cursor: 'pointer' }}>
+                      <div style={{ fontWeight: 500, marginBottom: '4px' }}>{m.name}</div>
+                      <div style={{ fontSize: '11px', color: '#666' }}>
+                        <span style={{ color: '#22c55e' }}>{m.calories} kcal</span> • <span style={{ color: '#ef4444' }}>{m.protein}g B</span> • <span style={{ color: '#3b82f6' }}>{m.carbs}g S</span> • <span style={{ color: '#eab308' }}>{m.fat}g T</span>
+                      </div>
+                    </div>
+                    <button onClick={() => delSavedMeal(m.id)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: '18px', marginLeft: '8px' }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
               <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PŘIDAT JÍDLO</div>
               <input value={mName} onChange={e => setMName(e.target.value)} placeholder="Název jídla" style={{ width: '100%', background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '12px', color: '#fff', fontSize: '14px', marginBottom: '12px' }} />
@@ -302,8 +472,12 @@ export default function Home() {
                 <input value={mCarb} onChange={e => setMCarb(e.target.value)} placeholder="S" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#3b82f6', fontSize: '14px', textAlign: 'center' }} />
                 <input value={mFat} onChange={e => setMFat(e.target.value)} placeholder="T" style={{ background: '#000', border: '1px solid #333', borderRadius: '6px', padding: '10px', color: '#eab308', fontSize: '14px', textAlign: 'center' }} />
               </div>
-              <button onClick={addMeal} style={{ width: '100%', background: '#22c55e', border: 'none', borderRadius: '8px', padding: '12px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>Přidat jídlo</button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={addMeal} style={{ flex: 1, background: '#22c55e', border: 'none', borderRadius: '8px', padding: '12px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>Přidat</button>
+                <button onClick={savePresetMeal} style={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#666', fontWeight: 600, cursor: 'pointer' }}>💾</button>
+              </div>
             </div>
+
             <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>DNES</h3>
             {tdMls.map(m => <div key={m.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div><div style={{ fontWeight: 500, marginBottom: '4px' }}>{m.name}</div><div style={{ fontSize: '11px', color: '#666' }}><span style={{ color: '#22c55e' }}>{m.calories} kcal</span> • <span style={{ color: '#ef4444' }}>{m.protein}g B</span> • <span style={{ color: '#3b82f6' }}>{m.carbs}g S</span> • <span style={{ color: '#eab308' }}>{m.fat}g T</span></div></div><button onClick={() => delMeal(m.id)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: '18px' }}>×</button></div>)}
           </div>
@@ -313,7 +487,7 @@ export default function Home() {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 200, overflow: 'auto', padding: '16px' }}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <button onClick={() => setSelEx(null)} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>← ZPĚT</button>
+                <button onClick={() => { setSelEx(null); setCurSets([]); }} style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>← ZPĚT</button>
                 <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 600 }}>{selEx.name}</h2>
                 <div style={{ width: '50px' }} />
               </div>
