@@ -363,86 +363,123 @@ export default function Home() {
 
         {view === 'weight' && (
           <div>
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px' }}>AKTUÁLNÍ HMOTNOST</div>
-              <div style={{ fontSize: '48px', fontWeight: 700 }}>{lastWg > 0 ? lastWg : '--'}<span style={{ fontSize: '20px', color: '#666', marginLeft: '4px' }}>kg</span></div>
+            {/* Current Weight Card */}
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '16px' }}>
+              <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>Aktuální hmotnost</div>
+              <div style={{ fontSize: '56px', fontWeight: 700, letterSpacing: '-0.02em' }}>
+                {lastWg > 0 ? lastWg : '––'}
+                <span style={{ fontSize: '22px', color: 'var(--ios-label-secondary)', marginLeft: '4px', fontWeight: 600 }}>kg</span>
+              </div>
               {weightData.trend !== 0 && (
-                <div style={{ marginTop: '8px', color: weightData.trend > 0 ? '#ef4444' : '#22c55e', fontSize: '14px' }}>
-                  {weightData.trend > 0 ? '↑ +' : '↓ '}{weightData.trend.toFixed(1)} kg za {weightPeriod === 'week' ? 'týden' : weightPeriod === 'month' ? 'měsíc' : 'rok'}
+                <div style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: weightData.trend > 0 ? 'rgba(255, 69, 58, 0.15)' : 'rgba(48, 209, 88, 0.15)', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '17px' }}>{weightData.trend > 0 ? '↑' : '↓'}</span>
+                  <span style={{ color: weightData.trend > 0 ? 'var(--ios-red)' : 'var(--ios-green)', fontSize: '15px', fontWeight: 600 }}>
+                    {Math.abs(weightData.trend).toFixed(1)} kg
+                  </span>
+                  <span style={{ color: 'var(--ios-label-secondary)', fontSize: '15px' }}>
+                    · {weightPeriod === 'week' ? '7 dní' : weightPeriod === 'month' ? '30 dní' : 'rok'}
+                  </span>
                 </div>
               )}
             </div>
 
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>CÍL HMOTNOSTI</div>
+            {/* Weight Goal Card */}
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', fontWeight: 500 }}>Cílová hmotnost</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="number" 
+                    inputMode="decimal"
                     value={weightGoal} 
                     onChange={e => setWeightGoal(parseFloat(e.target.value) || 85)} 
-                    style={{ background: '#000', border: '1px solid #333', borderRadius: '4px', padding: '4px 8px', color: '#22c55e', fontSize: '14px', width: '60px', textAlign: 'center' }} 
+                    style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '8px', padding: '8px 12px', color: 'var(--ios-green)', fontSize: '17px', width: '70px', textAlign: 'center', fontWeight: 600, outline: 'none' }} 
                   />
-                  <span style={{ color: '#666', fontSize: '12px' }}>kg</span>
+                  <span style={{ color: 'var(--ios-label-secondary)', fontSize: '15px' }}>kg</span>
                 </div>
               </div>
-              <div style={{ background: '#1a1a1a', borderRadius: '8px', height: '12px', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--ios-bg-tertiary)', borderRadius: '12px', height: '16px', overflow: 'hidden' }}>
                 <div style={{ 
                   width: lastWg > 0 ? `${Math.min(100, Math.max(0, (lastWg / weightGoal) * 100))}%` : '0%', 
                   height: '100%', 
-                  background: lastWg >= weightGoal ? '#22c55e' : '#eab308',
+                  background: lastWg >= weightGoal ? 'var(--ios-green)' : 'var(--ios-orange)',
                   transition: 'width 0.3s ease'
                 }} />
               </div>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              <div style={{ marginTop: '12px', fontSize: '15px', color: 'var(--ios-label-secondary)' }}>
                 {lastWg > 0 ? (lastWg >= weightGoal ? '✓ Cíl dosažen!' : `${(weightGoal - lastWg).toFixed(1)} kg do cíle`) : 'Zadejte hmotnost'}
               </div>
             </div>
 
+            {/* Period Selector */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               {(['week', 'month', 'year'] as const).map(p => (
-                <button key={p} onClick={() => setWeightPeriod(p)} style={{ flex: 1, background: weightPeriod === p ? '#22c55e' : '#0a0a0a', border: weightPeriod === p ? 'none' : '1px solid #333', borderRadius: '8px', padding: '10px', color: weightPeriod === p ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', textTransform: 'uppercase' }}>
+                <button key={p} onClick={() => setWeightPeriod(p)} className="touch-feedback" style={{ flex: 1, background: weightPeriod === p ? 'var(--ios-green)' : 'var(--ios-bg-secondary)', border: 'none', borderRadius: '12px', padding: '12px', color: weightPeriod === p ? '#000' : 'var(--ios-label)', fontWeight: 600, cursor: 'pointer', fontSize: '15px', transition: 'all 0.2s ease' }}>
                   {p === 'week' ? '7 dní' : p === 'month' ? '30 dní' : 'Rok'}
                 </button>
               ))}
             </div>
 
+            {/* Graph */}
             {weightData.data.length >= 2 ? (
-              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                <div style={{ height: '150px', position: 'relative', marginBottom: '12px' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
-                    <span>{Math.max(...weightData.data.map(w => w.weight)) + 2}</span><span>{Math.min(...weightData.data.map(w => w.weight)) - 2}</span>
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '16px' }}>
+                <div style={{ height: '180px', position: 'relative', marginBottom: '16px' }}>
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '36px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ios-label-tertiary)', fontWeight: 500 }}>
+                    <span>{Math.max(...weightData.data.map(w => w.weight)) + 2}</span>
+                    <span>{Math.min(...weightData.data.map(w => w.weight)) - 2}</span>
                   </div>
-                  <div style={{ marginLeft: '35px', height: '100%', position: 'relative', borderBottom: '1px solid #222' }}>
+                  <div style={{ marginLeft: '40px', height: '100%', position: 'relative', borderBottom: '1px solid var(--ios-separator)' }}>
                     {weightData.data.map((w, i) => {
                       const minW = Math.min(...weightData.data.map(w => w.weight)) - 2;
                       const maxW = Math.max(...weightData.data.map(w => w.weight)) + 2;
                       const left = (i / (weightData.data.length - 1)) * 100;
                       const top = ((maxW - w.weight) / (maxW - minW)) * 100;
                       return (
-                        <div key={w.id} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', transform: 'translate(-50%, 50%)' }} title={w.weight + ' kg - ' + fmtD(w.date)} />
+                        <div key={w.id} style={{ position: 'absolute', left: left + '%', top: top + '%', width: '10px', height: '10px', background: 'var(--ios-green)', borderRadius: '50%', transform: 'translate(-50%, 50%)', border: '2px solid var(--ios-bg-secondary)' }} title={w.weight + ' kg - ' + fmtD(w.date)} />
                       );
                     })}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444' }}>
-                  <span>{weightData.data[0] ? fmtD(weightData.data[0].date) : '-'}</span>
-                  <span style={{ color: '#666' }}>Průměr: {weightData.avg.toFixed(1)} kg</span>
-                  <span>{weightData.data[weightData.data.length - 1] ? fmtD(weightData.data[weightData.data.length - 1].date) : '-'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ios-label-secondary)' }}>
+                  <span>{weightData.data[0] ? fmtD(weightData.data[0].date) : '–'}</span>
+                  <span style={{ fontWeight: 600 }}>Ø {weightData.avg.toFixed(1)} kg</span>
+                  <span>{weightData.data[weightData.data.length - 1] ? fmtD(weightData.data[weightData.data.length - 1].date) : '–'}</span>
                 </div>
               </div>
             ) : (
-              <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '40px', textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                Potřebuješ alespoň 2 záznamy pro graf
+              <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '48px 24px', textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📊</div>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px' }}>Potřebuješ alespoň 2 záznamy pro graf</div>
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <input value={newWght} onChange={e => setNewWght(e.target.value)} placeholder="Hmotnost (kg)" style={{ flex: 1, background: '#0a0a0a', border: '1px solid #333', borderRadius: '8px', padding: '14px', color: '#fff', fontSize: '16px' }} />
-              <button onClick={addWght} style={{ background: '#22c55e', border: 'none', borderRadius: '8px', padding: '14px 20px', color: '#000', fontWeight: 600, cursor: 'pointer' }}>+</button>
+            {/* Add Weight Input */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+              <input 
+                value={newWght} 
+                onChange={e => setNewWght(e.target.value)} 
+                placeholder="Hmotnost (kg)" 
+                inputMode="decimal"
+                style={{ flex: 1, background: 'var(--ios-bg-secondary)', border: 'none', borderRadius: '14px', padding: '18px 20px', color: 'var(--ios-label)', fontSize: '17px', outline: 'none', minHeight: '56px' }} 
+              />
+              <button onClick={addWght} className="touch-feedback" style={{ background: 'var(--ios-green)', border: 'none', borderRadius: '14px', padding: '18px 24px', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: '20px', minWidth: '64px', minHeight: '56px', transition: 'all 0.2s ease' }}>+</button>
             </div>
-            <h3 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>HISTORIE</h3>
-            {wght.slice(0, 10).map(e => <div key={e.id} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>{fmt(e.date)}</span><span style={{ fontWeight: 600 }}>{e.weight} kg</span></div>)}
+
+            {/* History */}
+            <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>Historie</h3>
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden' }}>
+              {wght.slice(0, 10).map((e, idx) => (
+                <div key={e.id} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx < Math.min(9, wght.length - 1) ? '0.5px solid var(--ios-separator)' : 'none' }}>
+                  <span style={{ color: 'var(--ios-label-secondary)', fontSize: '15px' }}>{fmt(e.date)}</span>
+                  <span style={{ fontWeight: 600, fontSize: '17px' }}>{e.weight} kg</span>
+                </div>
+              ))}
+              {wght.length === 0 && (
+                <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--ios-label-tertiary)' }}>
+                  Zatím žádné záznamy
+                </div>
+              )}
+            </div>
           </div>
         )}
 
