@@ -278,17 +278,6 @@ export default function Home() {
               })}
             </div>
 
-            {todayCompleted.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ color: '#22c55e', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>✅ DNES HOTOVO</h4>
-                {todayCompleted.map((c, i) => c && (
-                  <div key={c.id || i} style={{ background: '#0a0a0a', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', border: '1px solid #22c55e' }}>
-                    <span style={{ fontWeight: 500 }}>{c.name}</span>
-                    <span style={{ color: '#666', fontSize: '12px' }}>{c.sets.length}× {c.sets[0]?.weight}kg</span>
-                  </div>
-                ))}
-              </div>
-            )}
 
             <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
             {MESO_DAYS.map((d, idx) => (
