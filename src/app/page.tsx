@@ -180,7 +180,7 @@ export default function Home() {
 
   const getLast = (id: string) => wHist.filter(w => w.exerciseId === id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   const startW = (ex: Exercise) => { const t = getLast(ex.id) ? calcTargets(getLast(ex.id).sets) : { weight: 50, reps: 8 }; setSelEx(ex); setCurSets([{ reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }, { reps: t.reps, weight: t.weight, rir: 3, completed: false }]); };
-  const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean) => { 
+  const updSet = (i: number, f: keyof WorkoutSet, v: number | boolean | string) => { 
     const ns = [...curSets]; 
     ns[i] = { ...ns[i], [f]: v }; 
     setCurSets(ns); 
@@ -903,10 +903,20 @@ export default function Home() {
                       <input type="checkbox" checked={s.completed} onChange={e => updSet(i, 'completed', e.target.checked)} style={{ width: '24px', height: '24px', accentColor: 'var(--ios-green)', cursor: 'pointer' }} />
                     </label>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>kg</label><input type="number" inputMode="decimal" value={s.weight} onChange={e => updSet(i, 'weight', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: 'var(--ios-label)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
                     <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>opak.</label><input type="number" inputMode="numeric" value={s.reps} onChange={e => updSet(i, 'reps', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: 'var(--ios-label)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
                     <div><label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '8px', fontWeight: 500 }}>RIR</label><input type="number" inputMode="numeric" min="0" max="5" value={s.rir} onChange={e => updSet(i, 'rir', Number(e.target.value))} style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '14px 12px', color: s.rir <= 2 ? 'var(--ios-green)' : s.rir <= 3 ? 'var(--ios-orange)' : 'var(--ios-red)', fontSize: '20px', fontWeight: 600, textAlign: 'center', outline: 'none' }} /></div>
+                  </div>
+                  {/* Exercise Note */}
+                  <div>
+                    <input 
+                      type="text" 
+                      value={s.note || ''} 
+                      onChange={e => updSet(i, 'note', e.target.value)} 
+                      placeholder="Poznámka (volitelné)" 
+                      style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '10px', padding: '12px 16px', color: 'var(--ios-label)', fontSize: '15px', outline: 'none' }} 
+                    />
                   </div>
                 </div>
               ))}
