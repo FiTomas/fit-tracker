@@ -283,25 +283,19 @@ export default function Home() {
                   </div>
                 );
               })}
+              {exercisesList.filter(ex => ex.category === 'CUSTOM').map(ex => {
+                const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
+                return (
+                  <div key={ex.id} style={{ marginBottom: '8px' }}>
+                    <button onClick={() => startW(ex)} style={{ width: '100%', background: isCompleted ? 'rgba(34, 197, 94, 0.15)' : '#0a0a0a', border: isCompleted ? '1px solid #22c55e' : '1px solid #22c55e', borderRadius: '8px', padding: '14px 16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', fontSize: '14px' }}>
+                      <span style={{ fontWeight: 500 }}>{ex.name} {isCompleted && '✓'}</span>
+                      <span style={{ color: isCompleted ? '#22c55e' : '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>
+                    </button>
+                  </div>
+                );
+              })}
               <button onClick={() => setShowAddExercise(true)} style={{ width: '100%', background: '#0a0a0a', border: '1px dashed #333', borderRadius: '8px', padding: '12px', color: '#666', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>+ Přidat cvik</button>
             </div>
-
-            {exercisesList.filter(ex => ex.category === 'CUSTOM').length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ color: '#eab308', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: 600 }}>⭐ VLASTNÍ CVIKY</h3>
-                {exercisesList.filter(ex => ex.category === 'CUSTOM').map(ex => {
-                  const isCompleted = todayCompleted.some(c => c?.name.toLowerCase() === ex.name.toLowerCase());
-                  return (
-                    <div key={ex.id} style={{ marginBottom: '8px' }}>
-                      <button onClick={() => startW(ex)} style={{ width: '100%', background: isCompleted ? 'rgba(234, 179, 8, 0.15)' : '#0a0a0a', border: isCompleted ? '1px solid #eab308' : '1px solid #eab308', borderRadius: '8px', padding: '14px 16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', fontSize: '14px' }}>
-                        <span style={{ fontWeight: 500 }}>{ex.name} {isCompleted && '✓'}</span>
-                        <span style={{ color: isCompleted ? '#eab308' : '#666', fontSize: '12px' }}>{getLast(ex.id)?.sets[0]?.weight || '-'} kg</span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             <h4 style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px' }}>PLÁN TÝDNE</h4>
             {MESO_DAYS.map((d, idx) => (
