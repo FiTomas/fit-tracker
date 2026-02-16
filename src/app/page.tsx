@@ -77,6 +77,13 @@ export default function Home() {
     const saved = localStorage.getItem('fitTracker_exercises');
     return saved ? JSON.parse(saved) : DEFAULT_EXERCISES;
   });
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [newExName, setNewExName] = useState('');
+  const [exercisesList, setExercisesList] = useState<Exercise[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_EXERCISES;
+    const saved = localStorage.getItem('fitTracker_exercises');
+    return saved ? JSON.parse(saved) : DEFAULT_EXERCISES;
+  });
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
