@@ -116,6 +116,9 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(true);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
   const [currentNote, setCurrentNote] = useState('');
+  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [selectedExercisesForTemplate, setSelectedExercisesForTemplate] = useState<Set<string>>(new Set());
   const [view, setView] = useState<'workout' | 'weight' | 'food' | 'archive'>('workout');
   const [selWeek, setSelWeek] = useState<number | null>(null);
   const [activeDay, setActiveDay] = useState<number>(() => {
@@ -138,9 +141,11 @@ export default function Home() {
     const f = localStorage.getItem('fitTracker_calorieGoal');
     const g = localStorage.getItem('fitTracker_weightGoal');
     const i = localStorage.getItem('fitTracker_darkMode');
+    const j = localStorage.getItem('fitTracker_templates');
     if (a) setWHist(JSON.parse(a)); if (b) setWght(JSON.parse(b)); if (c) setMeals(JSON.parse(c)); if (d) setExercisesList(JSON.parse(d)); if (e) setSavedMeals(JSON.parse(e)); if (f) setCalorieGoal(parseInt(f)); if (g) setWeightGoal(parseFloat(g));
     const h = localStorage.getItem("fitTracker_completedWeeks"); if (h) setCompletedWeeks(JSON.parse(h));
     if (i !== null) setDarkMode(i === 'true');
+    if (j) setWorkoutTemplates(JSON.parse(j));
   }, []);
 
   // Apply dark/light mode
@@ -191,22 +196,6 @@ export default function Home() {
     }
   };
   
-  const quickAdd = (ex: Exercise) => {
-    const lastLog = getLast(ex.id);
-    if (!lastLog) {
-      startW(ex);
-      return;
-    }
-    const bestSet = lastLog.sets.reduce((a, b) => a.reps > b.reps || (a.reps === b.reps && a.weight > b.weight) ? a : b);
-    const newLog = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      exerciseId: ex.id,
-      sets: [{ ...bestSet, completed: true }]
-    };
-    setWHist([newLog, ...wHist]);
-  };
-
   const toggleCategory = (cat: string) => {
     const newCollapsed = new Set(collapsedCategories);
     if (newCollapsed.has(cat)) {
@@ -215,6 +204,32 @@ export default function Home() {
       newCollapsed.add(cat);
     }
     setCollapsedCategories(newCollapsed);
+  };
+
+  // Workout Templates
+  const saveAsTemplate = (name: string, exerciseIds: string[]) => {
+    const newTemplate: WorkoutTemplate = {
+      id: Date.now().toString(),
+      name,
+      exerciseIds
+    };
+    const updated = [...workoutTemplates, newTemplate];
+    setWorkoutTemplates(updated);
+    localStorage.setItem('fitTracker_templates', JSON.stringify(updated));
+  };
+
+  const deleteTemplate = (id: string) => {
+    const updated = workoutTemplates.filter(t => t.id !== id);
+    setWorkoutTemplates(updated);
+    localStorage.setItem('fitTracker_templates', JSON.stringify(updated));
+  };
+
+  const loadTemplate = (template: WorkoutTemplate) => {
+    // Scroll to first exercise in template
+    const firstEx = exercisesList.find(ex => ex.id === template.exerciseIds[0]);
+    if (firstEx) {
+      startW(firstEx);
+    }
   };
   const finW = () => { 
     if (!selEx) return; 
@@ -471,16 +486,6 @@ export default function Home() {
                               </div>
                               <span style={{ color: isCompleted ? 'var(--ios-green)' : 'var(--ios-label-tertiary)', fontSize: '15px', fontWeight: 500 }}>{lastLog?.sets[0]?.weight || '–'} kg</span>
                             </button>
-                            {lastLog && (
-                              <button 
-                                onClick={() => quickAdd(ex)} 
-                                className="touch-feedback"
-                                style={{ width: '100%', background: 'rgba(48, 209, 88, 0.1)', border: 'none', borderTop: '0.5px solid var(--ios-separator)', padding: '12px 20px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', color: 'var(--ios-green)', fontSize: '15px', fontWeight: 600 }}
-                              >
-                                <span>⚡</span>
-                                <span>Quick Add {lastLog.sets[0].weight}kg × {lastLog.sets[0].reps}</span>
-                              </button>
-                            )}
                           </div>
                         </div>
                       );
@@ -490,6 +495,54 @@ export default function Home() {
               })}
               
               <button onClick={() => setShowAddExercise(true)} className="touch-feedback" style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: '1px dashed var(--ios-separator)', borderRadius: '14px', padding: '18px', color: 'var(--ios-blue)', fontSize: '17px', cursor: 'pointer', fontWeight: 600, minHeight: '56px', transition: 'all 0.2s ease' }}>+ Přidat cvik</button>
+            </div>
+
+            {/* Workout Templates */}
+            <div style={{ marginBottom: '24px' }}>
+              {workoutTemplates.length > 0 && (
+                <>
+                  <h3 style={{ color: 'var(--ios-label-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', fontWeight: 600 }}>🏃 Šablony tréninků</h3>
+                  <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '14px', overflow: 'hidden', marginBottom: '12px' }}>
+                    {workoutTemplates.map((template, idx) => (
+                      <div key={template.id} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: idx < workoutTemplates.length - 1 ? '0.5px solid var(--ios-separator)' : 'none' }}>
+                        <button 
+                          onClick={() => {
+                            // Start workout with first exercise from template
+                            const firstExId = template.exerciseIds[0];
+                            const firstEx = exercisesList.find(ex => ex.id === firstExId);
+                            if (firstEx) startW(firstEx);
+                          }}
+                          className="touch-feedback"
+                          style={{ flex: 1, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', padding: 0 }}
+                        >
+                          <div style={{ fontWeight: 600, fontSize: '17px', marginBottom: '4px', color: 'var(--ios-label)' }}>{template.name}</div>
+                          <div style={{ fontSize: '13px', color: 'var(--ios-label-secondary)' }}>
+                            {template.exerciseIds.map(id => exercisesList.find(ex => ex.id === id)?.name).filter(Boolean).join(', ')}
+                          </div>
+                        </button>
+                        <button 
+                          onClick={() => deleteTemplate(template.id)} 
+                          className="touch-feedback"
+                          style={{ background: 'none', border: 'none', color: 'var(--ios-red)', cursor: 'pointer', fontSize: '20px', marginLeft: '12px', padding: '8px' }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <button 
+                onClick={() => {
+                  setShowCreateTemplate(true);
+                  setSelectedExercisesForTemplate(new Set(dayExercises.map(name => exercisesList.find(ex => ex.name === name)?.id).filter(Boolean) as string[]));
+                }} 
+                className="touch-feedback" 
+                style={{ width: '100%', background: 'var(--ios-bg-secondary)', border: '1px dashed var(--ios-separator)', borderRadius: '14px', padding: '16px', color: 'var(--ios-blue)', fontSize: '15px', cursor: 'pointer', fontWeight: 600, minHeight: '50px', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <span>💾</span>
+                <span>Vytvořit šablonu</span>
+              </button>
             </div>
 
             {/* Collapsible Weekly Plan */}
@@ -833,6 +886,62 @@ export default function Home() {
                 <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '15px' }}>Zatím žádná jídla</div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Create Template Modal */}
+        {showCreateTemplate && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) { setShowCreateTemplate(false); setNewTemplateName(''); setSelectedExercisesForTemplate(new Set()); }}} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ background: 'var(--ios-bg-secondary)', borderTopLeftRadius: '22px', borderTopRightRadius: '22px', padding: '24px', maxWidth: '600px', width: '100%', paddingBottom: 'max(env(safe-area-inset-bottom), 24px)', maxHeight: '80vh', overflow: 'auto' }}>
+              <div style={{ width: '36px', height: '5px', background: 'var(--ios-separator)', borderRadius: '3px', margin: '0 auto 20px' }}></div>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Nová šablona</h3>
+              <input 
+                value={newTemplateName} 
+                onChange={e => setNewTemplateName(e.target.value)} 
+                placeholder="Název šablony (např. Push Day)" 
+                style={{ width: '100%', background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '12px', padding: '16px', color: 'var(--ios-label)', fontSize: '17px', marginBottom: '20px', outline: 'none' }} 
+              />
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '12px', fontWeight: 500 }}>Vyber cviky pro šablonu:</label>
+                <div style={{ background: 'var(--ios-bg-tertiary)', borderRadius: '14px', overflow: 'hidden' }}>
+                  {exercisesList.filter(ex => ex.category !== 'CUSTOM').map((ex, idx) => (
+                    <div 
+                      key={ex.id} 
+                      onClick={() => {
+                        const newSelected = new Set(selectedExercisesForTemplate);
+                        if (newSelected.has(ex.id)) {
+                          newSelected.delete(ex.id);
+                        } else {
+                          newSelected.add(ex.id);
+                        }
+                        setSelectedExercisesForTemplate(newSelected);
+                      }}
+                      className="touch-feedback"
+                      style={{ padding: '16px 20px', borderBottom: idx < exercisesList.filter(ex => ex.category !== 'CUSTOM').length - 1 ? '0.5px solid var(--ios-separator)' : 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    >
+                      <span style={{ color: 'var(--ios-label)', fontSize: '17px' }}>{ex.name}</span>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: `2px solid ${selectedExercisesForTemplate.has(ex.id) ? 'var(--ios-green)' : 'var(--ios-separator)'}`, background: selectedExercisesForTemplate.has(ex.id) ? 'var(--ios-green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '14px' }}>
+                        {selectedExercisesForTemplate.has(ex.id) && '✓'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  if (newTemplateName.trim() && selectedExercisesForTemplate.size > 0) {
+                    saveAsTemplate(newTemplateName.trim(), Array.from(selectedExercisesForTemplate));
+                    setNewTemplateName('');
+                    setSelectedExercisesForTemplate(new Set());
+                    setShowCreateTemplate(false);
+                  }
+                }} 
+                className="touch-feedback"
+                style={{ width: '100%', background: 'var(--ios-green)', border: 'none', borderRadius: '12px', padding: '16px', color: '#000', fontSize: '17px', fontWeight: 600, cursor: 'pointer', minHeight: '50px' }}
+              >
+                Uložit šablonu
+              </button>
+            </div>
           </div>
         )}
 
