@@ -80,6 +80,8 @@ export default function Home() {
   });
   const [completedWeeks, setCompletedWeeks] = useState<number[]>([]);
   const [showMesoComplete, setShowMesoComplete] = useState(false);
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [newExName, setNewExName] = useState('');
   const [weightPeriod, setWeightPeriod] = useState<'week' | 'month' | 'year'>('month');
   const [foodPeriod, setFoodPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [calorieGoal, setCalorieGoal] = useState<number>(2500);
