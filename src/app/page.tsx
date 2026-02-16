@@ -509,40 +509,52 @@ export default function Home() {
 
         {view === 'food' && (
           <div>
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>DENNÍ CÍL KALORII</div>
+            {/* Daily Calories Card */}
+            <div style={{ background: 'var(--ios-bg-secondary)', borderRadius: '20px', padding: '24px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', fontWeight: 500 }}>Denní cíl</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input 
                     type="number" 
+                    inputMode="numeric"
                     value={calorieGoal} 
                     onChange={e => setCalorieGoal(parseInt(e.target.value) || 2500)} 
-                    style={{ background: '#000', border: '1px solid #333', borderRadius: '4px', padding: '4px 8px', color: '#22c55e', fontSize: '14px', width: '70px', textAlign: 'center' }} 
+                    style={{ background: 'var(--ios-bg-tertiary)', border: 'none', borderRadius: '8px', padding: '8px 12px', color: 'var(--ios-green)', fontSize: '17px', width: '80px', textAlign: 'center', fontWeight: 600, outline: 'none' }} 
                   />
-                  <span style={{ color: '#666', fontSize: '12px' }}>kcal</span>
+                  <span style={{ color: 'var(--ios-label-secondary)', fontSize: '15px' }}>kcal</span>
                 </div>
               </div>
-              <div style={{ background: '#1a1a1a', borderRadius: '8px', height: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+              <div style={{ background: 'var(--ios-bg-tertiary)', borderRadius: '12px', height: '16px', overflow: 'hidden', marginBottom: '16px' }}>
                 <div style={{ 
                   width: `${Math.min(100, Math.max(0, (tdTot.calories / calorieGoal) * 100))}%`, 
                   height: '100%', 
-                  background: tdTot.calories >= calorieGoal ? '#22c55e' : '#eab308',
+                  background: tdTot.calories >= calorieGoal ? 'var(--ios-green)' : 'var(--ios-orange)',
                   transition: 'width 0.3s ease'
                 }} />
               </div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: tdTot.calories > 0 ? '#22c55e' : '#fff', marginBottom: '8px' }}>
-                {tdTot.calories}<span style={{ fontSize: '16px', color: '#666', marginLeft: '4px' }}>/ {calorieGoal} kcal</span>
+              <div style={{ fontSize: '48px', fontWeight: 700, marginBottom: '16px', letterSpacing: '-0.02em' }}>
+                {tdTot.calories}<span style={{ fontSize: '20px', color: 'var(--ios-label-tertiary)', marginLeft: '4px', fontWeight: 600 }}>/ {calorieGoal}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Bílkoviny</div><div style={{ color: '#ef4444', fontWeight: 600 }}>{tdTot.protein}g</div></div>
-                <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Sacharidy</div><div style={{ color: '#3b82f6', fontWeight: 600 }}>{tdTot.carbs}g</div></div>
-                <div style={{ textAlign: 'center' }}><div style={{ color: '#666', fontSize: '10px' }}>Tuky</div><div style={{ color: '#eab308', fontWeight: 600 }}>{tdTot.fat}g</div></div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '4px' }}>Bílkoviny</div>
+                  <div style={{ color: 'var(--ios-red)', fontWeight: 700, fontSize: '20px' }}>{tdTot.protein}g</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '4px' }}>Sacharidy</div>
+                  <div style={{ color: 'var(--ios-blue)', fontWeight: 700, fontSize: '20px' }}>{tdTot.carbs}g</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: 'var(--ios-label-tertiary)', fontSize: '13px', marginBottom: '4px' }}>Tuky</div>
+                  <div style={{ color: 'var(--ios-orange)', fontWeight: 700, fontSize: '20px' }}>{tdTot.fat}g</div>
+                </div>
               </div>
             </div>
 
+            {/* Period Selector */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               {(['week', 'month', 'year'] as const).map(p => (
-                <button key={p} onClick={() => setFoodPeriod(p)} style={{ flex: 1, background: foodPeriod === p ? '#22c55e' : '#0a0a0a', border: foodPeriod === p ? 'none' : '1px solid #333', borderRadius: '8px', padding: '10px', color: foodPeriod === p ? '#000' : '#666', fontWeight: 600, cursor: 'pointer', fontSize: '12px', textTransform: 'uppercase' }}>
+                <button key={p} onClick={() => setFoodPeriod(p)} className="touch-feedback" style={{ flex: 1, background: foodPeriod === p ? 'var(--ios-green)' : 'var(--ios-bg-secondary)', border: 'none', borderRadius: '12px', padding: '12px', color: foodPeriod === p ? '#000' : 'var(--ios-label)', fontWeight: 600, cursor: 'pointer', fontSize: '15px', transition: 'all 0.2s ease' }}>
                   {p === 'week' ? '7 dní' : p === 'month' ? '30 dní' : 'Rok'}
                 </button>
               ))}
