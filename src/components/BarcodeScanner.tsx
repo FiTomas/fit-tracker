@@ -41,6 +41,14 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
             const barcode = result.getText();
             console.log('Barcode scanned:', barcode);
             
+            // Stop camera immediately after successful scan
+            const videoEl = videoRef.current;
+            if (videoEl && videoEl.srcObject) {
+              const stream = videoEl.srcObject as MediaStream;
+              stream.getTracks().forEach(track => track.stop());
+              videoEl.srcObject = null;
+            }
+            
             // Fetch from Open Food Facts API
             try {
               const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
@@ -94,6 +102,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       if (videoElement && videoElement.srcObject) {
         const stream = videoElement.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
+        videoElement.srcObject = null;
       }
     };
   }, [scanning, onScan]);
