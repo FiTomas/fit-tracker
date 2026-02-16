@@ -386,6 +386,18 @@ export default function Home() {
           </div>
         )}
 
+        {view === 'archive' && (
+          <div>
+            <h3 style={{color: '#666', fontSize: '11px', textTransform: 'uppercase', marginBottom: '12px'}}>ARCHIV TRÉNINKŮ</h3>
+            {wHist.length === 0 ? <div style={{color: '#666', textAlign: 'center', padding: '40px'}}>Zatím žádné tréninky</div> : 
+              wHist.slice(0, 20).map(w => {
+                const ex = exercisesList.find(e => e.id === w.exerciseId);
+                return ex ? <div key={w.id} style={{background: '#0a0a0a', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '12px'}}><span style={{color: '#22c55e'}}>{new Date(w.date).toLocaleDateString('cs-CZ', {day: 'numeric', month: 'short'})}</span> - {ex.name}</div> : null;
+              })
+            }
+          </div>
+        )}
+
         {view === 'food' && (
           <div>
             <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
